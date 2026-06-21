@@ -3,6 +3,46 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+
+function CodeBlock({ children }: { children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      const text = extractText(children);
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+  return (
+    <div className="relative group my-2">
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copy code"
+        className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-md bg-background/80 backdrop-blur px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground border opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        {copied ? "Copied" : "Copy"}
+      </button>
+      <pre className="bg-muted/60 text-foreground rounded-lg p-3 pr-12 overflow-x-auto text-xs font-mono">
+        {children}
+      </pre>
+    </div>
+  );
+}
+
+function extractText(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (typeof node === "object" && "props" in (node as any)) {
+    return extractText((node as any).props?.children);
+  }
+  return "";
+}
 
 /**
  * Renders AI text with full markdown + math support, styled to feel native
@@ -48,9 +88,7 @@ export function RichText({ children }: { children: string }) {
               </code>
             );
           },
-          pre: ({ node, ...p }) => (
-            <pre className="bg-muted/60 text-foreground rounded-lg p-3 my-2 overflow-x-auto text-xs font-mono" {...p} />
-          ),
+          pre: ({ node, children }) => <CodeBlock>{children}</CodeBlock>,
           table: ({ node, ...p }) => (
             <div className="overflow-x-auto my-2">
               <table className="w-full text-xs border-collapse" {...p} />
