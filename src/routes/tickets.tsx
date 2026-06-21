@@ -183,7 +183,9 @@ function UploadTicket({ userId }: { userId?: string }) {
       const path = `${userId}/${Date.now()}.${ext}`;
       const up = await supabase.storage.from("tickets").upload(path, file, { upsert: false });
       if (up.error) throw up.error;
-      const { data: pub } = supabase.storage.from("tickets").getPublicUrl(path);
+      const { data: signed, error: sErr } = await supabase.storage.from("tickets").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr) throw sErr;
+      const pub = { publicUrl: signed.signedUrl };
       const ins = await supabase.from("tickets").insert({
         uploader_id: userId, title, description: desc, photo_url: pub.publicUrl,
         price: Number(price) || 0, pay_mode: payMode, contact: contact || null,
