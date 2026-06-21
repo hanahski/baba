@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { BrandLoader } from "./components/BrandLoader";
 
 export const getRouter = () => {
   const queryClient = new QueryClient();
@@ -12,6 +13,8 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadStaleTime: 30_000,
     defaultPreloadDelay: 50,
+    defaultPendingComponent: () => <BrandLoader />,
+    defaultPendingMs: 200,
   });
 
   return router;
