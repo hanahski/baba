@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;
