@@ -2088,7 +2088,6 @@ export type Database = {
         Args: { _member_ids: string[]; _name: string }
         Returns: string
       }
-      exec_sql: { Args: { q: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
