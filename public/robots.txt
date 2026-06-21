@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /me
+Disallow: /tickets
+Disallow: /login
+
+# Allow Google AdSense crawler full access
+User-agent: Mediapartners-Google
+Allow: /
+
+# Allow Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
+
+Sitemap: /sitemap.xml

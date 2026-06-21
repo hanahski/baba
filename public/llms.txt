@@ -1,0 +1,20 @@
+# StudentsPlug
+
+> EBSU's student knowledge hub — past questions, assignments, study notes, quizzes, news, market and games for Ebonyi State University students.
+
+## Pages
+
+- [Home](/): Latest student posts, novels, notes and feed.
+- [News](/news): Daily EBSU and world headlines curated for students.
+- [Faculties](/faculties): Browse EBSU faculties and departments.
+- [Courses](/courses): Free university-level textbooks and OpenCourseWare.
+- [Notes](/notes): Past questions, study notes and assignment helpers.
+- [Books](/books): Read free books in the library.
+- [Market](/market): Buy and sell with verified students.
+- [Games](/games): Trivia, puzzles and riddles between study sessions.
+- [Tools](/tools): OCR scan, calculator, dictionary, QR and more.
+- [EBSU Fees Guide](/guides/ebsu-fees): School fees and admission portal walkthrough.
+
+## Optional
+
+- [Chat](/chat): Plug AI study assistant.
