@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">StudentsPlug</string>
+    <string name="offline_title">You\'re offline</string>
+    <string name="offline_message">Showing cached pages. We\'ll reconnect automatically.</string>
+    <string name="notif_channel_default">StudentsPlug</string>
+    <string name="notif_channel_default_desc">Posts, messages, tickets and updates</string>
+</resources>
