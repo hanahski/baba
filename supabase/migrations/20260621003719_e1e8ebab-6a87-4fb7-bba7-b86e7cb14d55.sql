@@ -1,0 +1,1 @@
+SELECT public.exec_sql($migrations$-- (migration content will be supplied by the calling script)$migrations$);
