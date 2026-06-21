@@ -148,6 +148,11 @@ function NewPostPage() {
       setVerifyOpen(true);
       return;
     }
+    if (type === "news" && !isAdmin && !(profile as any)?.is_legit) {
+      toast.error("You need the Legit badge to post news.");
+      nav({ to: "/apply-badge" });
+      return;
+    }
     if (!title.trim()) { toast.error("Title is required"); return; }
     setBusy(true);
     try {
