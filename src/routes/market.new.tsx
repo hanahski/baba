@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useIsAdmin } from "@/lib/admin-ids";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ const BUCKET = "post-media"; // existing public bucket
 
 function NewListing() {
   const { user, loading } = useAuth();
+  const isAdmin = useIsAdmin(user?.id);
   const nav = useNavigate();
   useEffect(() => {
     if (!loading && !user) {
@@ -48,8 +50,40 @@ function NewListing() {
   const initial = (search.kind as Kind | undefined) ?? null;
   const [kind, setKind] = useState<Kind | null>(initial);
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-badges", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => (await supabase.from("profiles").select("is_sure_plug,is_legit,is_star").eq("id", user!.id).maybeSingle()).data,
+  });
+
   if (!kind) return <KindPicker onPick={setKind} />;
+
+  // Badge gates
+  if (kind === "products" && !isAdmin && !profile?.is_sure_plug) {
+    return <BadgeGate kind={kind} need="sure_plug" onBack={() => setKind(null)} />;
+  }
   return <ComposerForm kind={kind} onBack={() => setKind(null)} userId={user?.id} />;
+}
+
+function BadgeGate({ kind, need, onBack }: { kind: Kind; need: "sure_plug" | "legit" | "star"; onBack: () => void }) {
+  const labels: Record<string, { title: string; msg: string }> = {
+    sure_plug: { title: "Sure Plug badge required", msg: "Only trusted sellers (Sure Plug) can post products. Apply for the badge to unlock product listings." },
+    legit: { title: "Legit badge required", msg: "Only Legit contributors can post news. Apply for the Legit badge to share verified news." },
+    star: { title: "Star badge required", msg: "Only Star authors can compose books. Apply for the Star badge to unlock the book composer." },
+  };
+  const l = labels[need];
+  return (
+    <AppShell>
+      <div className="max-w-xl mx-auto text-center space-y-4 py-10">
+        <h1 className="text-2xl font-bold font-display">{l.title}</h1>
+        <p className="text-sm text-muted-foreground">{l.msg}</p>
+        <div className="flex justify-center gap-2">
+          <Button asChild><a href="/apply-badge">Apply for badge</a></Button>
+          <Button variant="outline" onClick={onBack}>Pick a different category</Button>
+        </div>
+      </div>
+    </AppShell>
+  );
 }
 
 function KindPicker({ onPick }: { onPick: (k: Kind) => void }) {

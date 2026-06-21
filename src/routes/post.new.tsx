@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
+import { useIsAdmin } from "@/lib/admin-ids";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ function kindFor(file: File): MediaKind | "pdf" | "other" {
 
 function NewPostPage() {
   const { user, profile, loading } = useAuth();
+  const isAdmin = useIsAdmin(user?.id);
   const nav = useNavigate();
   const [verifyOpen, setVerifyOpen] = useState(false);
   const { course: presetCourse, type: presetType } = Route.useSearch();
@@ -141,9 +143,14 @@ function NewPostPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { toast.error("Please sign in first"); nav({ to: "/login" }); return; }
-    if (!profile?.is_verified) {
+    if (!profile?.is_verified && !isAdmin) {
       toast.error("Please verify you're an EBSU student before posting");
       setVerifyOpen(true);
+      return;
+    }
+    if (type === "news" && !isAdmin && !(profile as any)?.is_legit) {
+      toast.error("You need the Legit badge to post news.");
+      nav({ to: "/apply-badge" });
       return;
     }
     if (!title.trim()) { toast.error("Title is required"); return; }
@@ -248,7 +255,7 @@ function NewPostPage() {
           </div>
         </header>
 
-        {profile && !profile.is_verified && (
+        {profile && !profile.is_verified && !isAdmin && (
           <div className="mb-4 border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-accent/10 to-background rounded-2xl p-4 flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
               <ShieldAlert className="w-5 h-5 text-primary" />
