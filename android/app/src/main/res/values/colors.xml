@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette mirrors the website's design tokens (indigo + amber). -->
+    <color name="brand_bg">#0B0B14</color>
+    <color name="brand_bg_light">#FFFFFF</color>
+    <color name="brand_primary">#4F46E5</color>
+    <color name="brand_primary_soft">#6366F1</color>
+    <color name="brand_accent">#F59E0B</color>
+    <color name="brand_text">#F8FAFC</color>
+    <color name="brand_text_muted">#94A3B8</color>
+</resources>
