@@ -141,7 +141,8 @@ function NewPostPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { toast.error("Please sign in first"); nav({ to: "/login" }); return; }
-    if (!profile?.is_verified) {
+    const isAdmin = !!(profile as any)?.is_admin;
+    if (!profile?.is_verified && !isAdmin) {
       toast.error("Please verify you're an EBSU student before posting");
       setVerifyOpen(true);
       return;

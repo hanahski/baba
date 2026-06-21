@@ -16,6 +16,7 @@ import { Link as RLink } from "@tanstack/react-router";
 import { MediaPlayer } from "@/components/MediaPlayer";
 import { SpecialBadges } from "@/components/SpecialBadges";
 import { AdminCrownBadge, useIsAdminUser } from "@/components/AdminCrownBadge";
+import { useIsAdmin } from "@/lib/admin-ids";
 import { getOrCreateDmThread } from "@/lib/dm";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [dmBusy, setDmBusy] = useState(false);
   const { data: isAdmin } = useIsAdminUser(user?.id);
+  const profileIsAdmin = useIsAdmin(id);
 
 
   const { data, isLoading, error } = useQuery({
@@ -86,15 +88,20 @@ function ProfilePage() {
               <div className="flex-1 min-w-0 pt-2 w-full">
                 <h1 className="text-xl sm:text-2xl font-bold font-display leading-tight break-words flex items-start gap-2">
                   <span className="break-words min-w-0 flex-1">{p.display_name}</span>
-                  {isMe && isAdmin && (
-                    <Link to="/admin" className="hover:opacity-80 transition-opacity" title="Admin Panel">
+                  {profileIsAdmin ? (
+                    isMe && isAdmin ? (
+                      <Link to="/admin" className="hover:opacity-80 transition-opacity" title="Admin Panel">
+                        <AdminCrownBadge size={24} className="mt-1" />
+                      </Link>
+                    ) : (
                       <AdminCrownBadge size={24} className="mt-1" />
-                    </Link>
+                    )
+                  ) : (
+                    <SpecialBadges profile={p} size={20} className="mt-1" />
                   )}
-                  <SpecialBadges profile={p} size={20} className="mt-1" />
                 </h1>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <RankBadge tier={p.rank_tier} step={p.rank_step} />
+                  {!profileIsAdmin && <RankBadge tier={p.rank_tier} step={p.rank_step} />}
                   <span className="text-xs text-muted-foreground">{p.approved_post_count} posts</span>
                   {p.academic_level && <Badge variant="secondary">{p.academic_level} level</Badge>}
                 </div>

@@ -317,7 +317,7 @@ function MePage() {
                   <SpecialBadges profile={profile} size={20} />
                 </h1>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <RankBadge tier={profile.rank_tier} step={profile.rank_step} />
+                  {!isAdmin && <RankBadge tier={profile.rank_tier} step={profile.rank_step} />}
                   <span className="text-xs text-muted-foreground">{profile.approved_post_count} posts</span>
                   {(profile as any).academic_level && <span className="text-xs px-2 py-0.5 rounded-full bg-muted">{(profile as any).academic_level} level</span>}
                 </div>
