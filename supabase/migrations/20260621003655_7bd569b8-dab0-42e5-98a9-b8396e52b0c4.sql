@@ -1,8 +1,3 @@
-DROP SCHEMA IF EXISTS public CASCADE;
-CREATE SCHEMA public;
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT CREATE ON SCHEMA public TO postgres;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION public.exec_sql(q text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   EXECUTE q;
