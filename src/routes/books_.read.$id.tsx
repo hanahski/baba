@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Loader2, Download, ExternalLink, Coins, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { SwipeBookReader } from "@/components/SwipeBookReader";
 
 export const Route = createFileRoute("/books_/read/$id")({ component: ReadBookPage });
 
@@ -306,18 +307,11 @@ function ReadBookPage() {
                     {(userChapters ?? []).length === 0 ? (
                       <p className="text-center text-muted-foreground text-sm">No chapters yet.</p>
                     ) : (
-                      <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none">
-                        {(userChapters ?? []).map((c: any) => (
-                          <section key={c.id} className="mb-10">
-                            <h2 className="font-display">{c.title}</h2>
-                            <div
-                              dangerouslySetInnerHTML={{
-                                __html: c.content || "<p><em>(empty)</em></p>",
-                              }}
-                            />
-                          </section>
-                        ))}
-                      </article>
+                      <SwipeBookReader
+                        bookId={userBookId!}
+                        title={book.title}
+                        chapters={userChapters as any}
+                      />
                     )}
                   </div>
                 ) : gid && embedUrl ? (
