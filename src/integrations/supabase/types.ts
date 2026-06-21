@@ -20,7 +20,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      exec_sql: { Args: { q: string }; Returns: Json }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
