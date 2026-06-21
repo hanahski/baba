@@ -105,7 +105,14 @@ function ComposerListPage() {
               </p>
             </div>
             <Button
-              onClick={() => setShowPicker((s) => !s)}
+              onClick={() => {
+                if (!canCompose) {
+                  toast.error("You need the Star badge to compose books.");
+                  window.location.href = "/apply-badge";
+                  return;
+                }
+                setShowPicker((s) => !s);
+              }}
               className="bg-gradient-to-r from-primary to-emerald-500 text-primary-foreground"
             >
               <Plus className="w-4 h-4 mr-1" /> Start writing
@@ -129,6 +136,18 @@ function ComposerListPage() {
             </div>
           )}
         </div>
+
+        {me && !canCompose && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-sm">
+            <p className="font-semibold">⭐ Star badge required to compose books.</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              Apply for the Star badge to unlock the book composer.
+            </p>
+            <Button asChild size="sm" className="mt-2">
+              <Link to="/apply-badge">Apply for Star badge</Link>
+            </Button>
+          </div>
+        )}
 
         {!me && (
           <div className="text-center py-16 bg-card border rounded-2xl">
