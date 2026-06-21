@@ -4,6 +4,16 @@ import { cn } from "@/lib/utils";
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea">>(
   ({ className, ...props }, ref) => {
+    const pmDefaults = {
+      autoComplete: props.autoComplete ?? "off",
+      autoCorrect: (props as any).autoCorrect ?? "off",
+      autoCapitalize: (props as any).autoCapitalize ?? "sentences",
+      spellCheck: props.spellCheck ?? true,
+      "data-1p-ignore": "true",
+      "data-lpignore": "true",
+      "data-bwignore": "true",
+      "data-form-type": "other",
+    };
     return (
       <textarea
         className={cn(
@@ -11,6 +21,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"tex
           className,
         )}
         ref={ref}
+        {...pmDefaults}
         {...props}
       />
     );

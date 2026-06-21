@@ -2,21 +2,12 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Mobile stability: prevent iOS text auto-zoom and double-tap zoom */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+body { touch-action: manipulation; overscroll-behavior-y: contain; }
+input, select, textarea { font-size: 16px; } /* iOS won't zoom inputs >=16px */
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -24,8 +15,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,103 +31,504 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-rank-normal: var(--rank-normal);
+  --color-rank-active: var(--rank-active);
+  --color-rank-legend: var(--rank-legend);
+  --color-rank-pro: var(--rank-pro);
+  --color-rank-sure-plug: var(--rank-sure-plug);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 1.25rem;
+  /* Neumorphism base: soft monochromatic surface where cards match the background */
+  --background: oklch(0.95 0.008 250);
+  --foreground: oklch(0.28 0.04 260);
+  --card: oklch(0.95 0.008 250);
+  --card-foreground: oklch(0.28 0.04 260);
+  --popover: oklch(0.96 0.008 250);
+  --popover-foreground: oklch(0.28 0.04 260);
+  --primary: oklch(0.58 0.16 265);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.008 250);
+  --secondary-foreground: oklch(0.32 0.04 260);
+  --muted: oklch(0.93 0.01 250);
+  --muted-foreground: oklch(0.50 0.03 255);
+  --accent: oklch(0.92 0.03 280);
+  --accent-foreground: oklch(0.32 0.05 280);
+  --destructive: oklch(0.62 0.20 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.65 0.16 155);
+  --success-foreground: oklch(0.99 0 0);
+  /* Borders & inputs are background-colored — neumorphism uses shadow, not lines */
+  --border: oklch(0.92 0.01 250);
+  --input: oklch(0.93 0.01 250);
+  --ring: oklch(0.58 0.16 265);
+
+  /* Neumorphism shadow tokens — light from top-left, dark to bottom-right */
+  --neu-light: oklch(1 0 0 / 0.95);
+  --neu-dark: oklch(0.62 0.04 260 / 0.22);
+  --neu-dark-strong: oklch(0.55 0.04 260 / 0.32);
+
+  /* Rank colors — Normal → Sure Plug */
+  --rank-normal: oklch(0.65 0.05 250);
+  --rank-active: oklch(0.70 0.17 155);
+  --rank-legend: oklch(0.70 0.18 60);
+  --rank-pro: oklch(0.62 0.22 295);
+  --rank-sure-plug: oklch(0.65 0.25 25);
+
+  --gradient-hero: linear-gradient(135deg, oklch(0.58 0.16 265), oklch(0.65 0.18 295));
+  --gradient-rank: linear-gradient(135deg, var(--rank-pro), var(--rank-sure-plug));
+
+  /* Soft extruded card (default), pressed/inset, hover-lifted, ring glow */
+  --shadow-card:
+    -6px -6px 14px var(--neu-light),
+     8px  8px 20px var(--neu-dark);
+  --shadow-card-lg:
+    -10px -10px 24px var(--neu-light),
+     14px  14px 32px var(--neu-dark-strong);
+  --shadow-inset:
+    inset  4px  4px  8px var(--neu-dark),
+    inset -4px -4px  8px var(--neu-light);
+  --shadow-glow: 0 0 0 4px oklch(0.58 0.16 265 / 0.18);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: oklch(0.22 0.02 260);
+  --foreground: oklch(0.94 0.01 250);
+  --card: oklch(0.22 0.02 260);
+  --card-foreground: oklch(0.94 0.01 250);
+  --popover: oklch(0.24 0.025 260);
+  --popover-foreground: oklch(0.94 0.01 250);
+  --primary: oklch(0.72 0.16 270);
+  --primary-foreground: oklch(0.15 0.02 260);
+  --secondary: oklch(0.22 0.02 260);
+  --secondary-foreground: oklch(0.94 0.01 250);
+  --muted: oklch(0.26 0.025 260);
+  --muted-foreground: oklch(0.70 0.02 255);
+  --accent: oklch(0.30 0.06 295);
+  --accent-foreground: oklch(0.94 0.01 250);
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.70 0.16 155);
+  --success-foreground: oklch(0.15 0.02 260);
+  --border: oklch(0.26 0.02 260);
+  --input: oklch(0.26 0.02 260);
+  --ring: oklch(0.72 0.16 270);
+
+  --neu-light: oklch(0.32 0.025 260 / 0.85);
+  --neu-dark: oklch(0.08 0.015 260 / 0.85);
+  --neu-dark-strong: oklch(0.06 0.015 260 / 0.95);
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
+  /* Neumorphism: borders are background-colored so existing `border` classes
+     visually fade into the surface without breaking layout/spacing. */
+  * { border-color: var(--color-border); }
   body {
-    background-color: var(--color-background);
+    background: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-hero { background: var(--gradient-hero); }
+  /* Neumorphic shadows — `shadow-card` is used app-wide, so upgrading it here
+     instantly skins every card, panel, dialog, and the admin tabs. */
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-card-lg { box-shadow: var(--shadow-card-lg); }
+  .shadow-inset { box-shadow: var(--shadow-inset); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .neu-pressable {
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .neu-pressable:active {
+    box-shadow: var(--shadow-inset);
+    transform: translateY(1px);
+  }
+}
+
+/* ── Global neumorphism polish ──────────────────────────────────────────
+   Soften shadcn primitives without touching their source. Scoped to native
+   elements + shadcn data attributes so layout, focus rings, and a11y stay. */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select,
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"] {
+  background: var(--color-background) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-inset);
+  border-radius: calc(var(--radius) - 0.25rem);
+  transition: box-shadow 0.2s ease;
+}
+input:focus, textarea:focus, select:focus,
+[data-slot="input"]:focus, [data-slot="textarea"]:focus,
+[data-slot="select-trigger"]:focus, [data-slot="select-trigger"][data-state="open"] {
+  outline: none;
+  box-shadow: var(--shadow-inset), 0 0 0 3px var(--ring);
+}
+
+/* Buttons — extrude solid-background buttons (primary, destructive, secondary,
+   accent, success). Ghost/link/outline buttons stay flat — applying shadow to
+   every button would clutter icon-only and toolbar actions. */
+button[class*="bg-primary"]:not(:disabled),
+button[class*="bg-destructive"]:not(:disabled),
+button[class*="bg-secondary"]:not(:disabled),
+button[class*="bg-accent"]:not(:disabled),
+button[class*="bg-success"]:not(:disabled),
+button[class*="bg-card"]:not(:disabled),
+button[class*="bg-gradient"]:not(:disabled),
+button[class*="bg-hero"]:not(:disabled) {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+button[class*="bg-primary"]:not(:disabled):active,
+button[class*="bg-destructive"]:not(:disabled):active,
+button[class*="bg-secondary"]:not(:disabled):active,
+button[class*="bg-accent"]:not(:disabled):active,
+button[class*="bg-success"]:not(:disabled):active,
+button[class*="bg-card"]:not(:disabled):active,
+button[class*="bg-gradient"]:not(:disabled):active,
+button[class*="bg-hero"]:not(:disabled):active {
+  box-shadow: var(--shadow-inset);
+  transform: translateY(1px);
+}
+
+
+
+
+
+@keyframes pulse-online {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.65 0.18 155 / 0.6); }
+  50% { box-shadow: 0 0 0 6px oklch(0.65 0.18 155 / 0); }
+}
+.online-dot { animation: pulse-online 2s ease-in-out infinite; }
+
+@keyframes rank-grow {
+  from { width: 0%; }
+}
+.rank-grow { animation: rank-grow 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.animate-delay-1 { animation-delay: 80ms; }
+.animate-delay-2 { animation-delay: 160ms; }
+.animate-delay-3 { animation-delay: 240ms; }
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.float-soft { animation: float-soft 4s ease-in-out infinite; }
+
+@keyframes shimmer-bg {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, var(--foreground) 0%, var(--primary) 50%, var(--foreground) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-bg 3.5s linear infinite;
+}
+
+.hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 14px 36px oklch(0.18 0.03 250 / 0.10); }
+
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.gradient-pan { background-size: 200% 200%; animation: gradient-pan 8s ease infinite; }
+
+@keyframes route-loader-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(220%); }
+}
+.route-loader-bar { animation: route-loader-slide 0.9s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+
+@keyframes route-loader-pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.55; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+.route-loader-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  animation: route-loader-pulse 0.8s ease-in-out infinite;
+}
+
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Verification checkmark stroke draw */
+@keyframes check-draw {
+  from { stroke-dashoffset: 50; }
+  to   { stroke-dashoffset: 0; }
+}
+.check-draw {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: check-draw 0.55s 0.15s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+
+
+/* Audio preview waveform (MediaPlayer) */
+@keyframes audiobeat {
+  0%   { transform: scaleY(0.35); opacity: 0.7; }
+  100% { transform: scaleY(1);    opacity: 1; }
+}
+@keyframes audioidle {
+  0%   { transform: scaleY(0.55); opacity: 0.4; }
+  100% { transform: scaleY(0.85); opacity: 0.7; }
+}
+@keyframes wavemove {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50%      { transform: translateX(-10px) scaleY(1.15); }
+}
+@keyframes orbitpulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes micbob {
+  0%   { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-4px) scale(1.05); }
+}
+@keyframes vinylspin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* ── Themed audio scene animations ─────────────────────────────────────── */
+@keyframes dance-bop   { 0%{transform:translateY(0)} 100%{transform:translateY(-6px) rotate(-2deg)} }
+@keyframes dance-arm-l { 0%{transform:rotate(-20deg)} 100%{transform:rotate(-70deg)} }
+@keyframes dance-arm-r { 0%{transform:rotate(20deg)}  100%{transform:rotate(70deg)} }
+@keyframes disco       { 0%,100%{opacity:.3;transform:scale(.9)} 50%{opacity:1;transform:scale(1.3)} }
+
+@keyframes talk-bob    { 0%{transform:translateY(0)} 100%{transform:translateY(-2px)} }
+@keyframes talk-mouth  { 0%{transform:scaleY(0.3)} 100%{transform:scaleY(1.4)} }
+@keyframes pod-ring    { 0%{transform:scale(0.6);opacity:0.9} 100%{transform:scale(3);opacity:0} }
+@keyframes onair       { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+@keyframes chalk       { 0%{stroke-dashoffset:120} 60%,100%{stroke-dashoffset:0} }
+@keyframes teach-sway  { 0%{transform:translateY(0)} 100%{transform:translateY(-3px) rotate(-1deg)} }
+@keyframes teach-arm   { 0%{transform:rotate(-10deg)} 100%{transform:rotate(15deg)} }
+
+@keyframes rock-bop    { 0%{transform:translateY(0) rotate(-2deg)} 100%{transform:translateY(-5px) rotate(2deg)} }
+@keyframes spot-sway   { 0%{transform:rotate(-12deg)} 100%{transform:rotate(10deg)} }
+@keyframes spot-sway2  { 0%{transform:rotate(12deg)}  100%{transform:rotate(-10deg)} }
+@keyframes crowd       { 0%{transform:translateY(0)} 100%{transform:translateY(-8px)} }
+
+@keyframes bar-pulse   { 0%{transform:scaleY(0.5)} 100%{transform:scaleY(1)} }
+@keyframes trend       { 0%{stroke-dashoffset:600} 60%,100%{stroke-dashoffset:0} }
+@keyframes dot-path    { 0%{offset-distance:0%} 100%{offset-distance:100%} }
+
+/* ── Avatar audio visualizer ──────────────────────────────────────────── */
+@keyframes av-spin     { to { transform: rotate(360deg); } }
+@keyframes av-bob      { 0%,100%{ transform: translate(-50%, -50%) scale(1); } 50%{ transform: translate(-50%, -54%) scale(1.04); } }
+@keyframes av-pulse    { 0%{ transform: scale(0.85); opacity: 0.9; } 100%{ transform: scale(1.6); opacity: 0; } }
+@keyframes av-bar      { 0%,100%{ transform: scaleY(0.35); } 50%{ transform: scaleY(1); } }
+@keyframes av-aurora-a { 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(18px,12px) scale(1.1); } }
+@keyframes av-aurora-b { 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(-22px,-14px) scale(1.15); } }
+@keyframes av-note     { 0%{ transform: translateY(0) rotate(-6deg); opacity: 0; } 25%{ opacity: 1; } 100%{ transform: translateY(-32px) rotate(8deg); opacity: 0; } }
+.av-spin     { animation: av-spin 12s linear infinite; }
+.av-bob      { animation: av-bob 0.6s ease-in-out infinite; }
+.av-pulse    { animation: av-pulse 1.6s ease-out infinite; }
+.av-bar      { animation: av-bar 0.7s ease-in-out infinite; }
+.av-aurora-a { animation: av-aurora-a 8s ease-in-out infinite; }
+.av-aurora-b { animation: av-aurora-b 10s ease-in-out infinite; }
+.av-note     { animation: av-note 2.4s ease-out infinite; }
+
+/* Dual-thumb trim range — thumbs are interactive, the track is transparent. */
+.trim-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--card);
+  box-shadow: 0 2px 8px oklch(0.18 0.03 250 / 0.25);
+  cursor: grab;
+  pointer-events: auto;
+}
+.trim-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--card);
+  box-shadow: 0 2px 8px oklch(0.18 0.03 250 / 0.25);
+  cursor: grab;
+  pointer-events: auto;
+}
+.trim-range::-webkit-slider-runnable-track { background: transparent; height: 18px; }
+.trim-range::-moz-range-track { background: transparent; height: 18px; }
+.trim-range:focus { outline: none; }
+
+/* ===== Rank badge glow + step animations =====
+   Per-step metal colour is injected as --rank-glow on the element. */
+.rank-glow {
+  box-shadow: 0 0 0 0 var(--rank-glow, transparent);
+  animation: rank-glow-pulse 2.6s ease-in-out infinite;
+}
+@keyframes rank-glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px 0 var(--rank-glow); }
+  50%      { box-shadow: 0 0 16px 3px var(--rank-glow); }
+}
+
+/* Step 5 (Gem) — stronger glow, hue shift, sparkle */
+.rank-gem-pulse {
+  position: relative;
+  background-size: 200% 200% !important;
+  animation: rank-gem-shimmer 3.6s linear infinite, rank-gem-glow 2.2s ease-in-out infinite;
+}
+.rank-gem-pulse::after {
+  content: "";
+  position: absolute; inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, transparent, var(--rank-glow), transparent 60%);
+  filter: blur(6px);
+  opacity: 0.7;
+  animation: rank-gem-spin 3s linear infinite;
+  z-index: -1;
+}
+@keyframes rank-gem-glow {
+  0%, 100% { box-shadow: 0 0 10px 1px var(--rank-glow); }
+  50%      { box-shadow: 0 0 24px 6px var(--rank-glow); }
+}
+@keyframes rank-gem-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes rank-gem-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* QR scanner moving scan line */
+@keyframes qr-scan-bounce {
+  0%, 100% { top: 4%; }
+  50%      { top: 96%; }
+}
+.qr-scanline {
+  top: 4%;
+  animation: qr-scan-bounce 2.2s ease-in-out infinite;
+}
+
+/* QR scanner — modern viewfinder */
+@keyframes qr-corner-pulse {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 6px var(--primary)); }
+  50%      { opacity: 1;    filter: drop-shadow(0 0 16px var(--primary)); }
+}
+.qr-corner { animation: qr-corner-pulse 1.8s ease-in-out infinite; }
+
+@keyframes qr-grid-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 28px 28px; }
+}
+.qr-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--primary) 35%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--primary) 35%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  animation: qr-grid-drift 6s linear infinite;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 75%);
+}
+
+@keyframes qr-ring-pulse {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  100% { transform: scale(1.25); opacity: 0;   }
+}
+.qr-ring {
+  position: absolute; inset: -8%;
+  border-radius: 1.5rem;
+  border: 2px solid color-mix(in oklab, var(--primary) 55%, transparent);
+  animation: qr-ring-pulse 2.4s ease-out infinite;
+}
+.qr-ring.r2 { animation-delay: 1.2s; }
+
+@keyframes qr-aurora {
+  0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1); opacity: 0.55; }
+  50%      { transform: translate3d(6%, 4%, 0) scale(1.15);  opacity: 0.85; }
+}
+.qr-aurora {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(40% 40% at 30% 30%, color-mix(in oklab, var(--primary) 55%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 70% 70%, color-mix(in oklab, #22d3ee 55%, transparent), transparent 70%);
+  filter: blur(40px);
+  animation: qr-aurora 8s ease-in-out infinite;
+}
+
+/* Admin gold verification badge — Facebook-style check with a glowing gold halo */
+.admin-gold-glow {
+  filter: drop-shadow(0 0 4px rgba(245, 179, 1, 0.55)) drop-shadow(0 0 10px rgba(245, 179, 1, 0.4));
+  animation: admin-gold-pulse 2.6s ease-in-out infinite;
+}
+@keyframes admin-gold-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(245, 179, 1, 0.45)) drop-shadow(0 0 10px rgba(245, 179, 1, 0.3)); }
+  50%      { filter: drop-shadow(0 0 7px rgba(255, 215, 100, 0.85)) drop-shadow(0 0 16px rgba(255, 200, 60, 0.65)); }
+}
+
+/* Nearby radar — concentric pulse rings + rotating sweep beam */
+@keyframes radar-pulse {
+  0%   { transform: scale(0.2); opacity: 0.7; }
+  100% { transform: scale(1);   opacity: 0;   }
+}
+@keyframes radar-sweep {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.radar-stage { position: relative; width: 220px; height: 220px; }
+.radar-ring {
+  position: absolute; inset: 0; border-radius: 9999px;
+  border: 2px solid hsl(var(--primary) / 0.5);
+  animation: radar-pulse 2.4s ease-out infinite;
+}
+.radar-ring.r2 { animation-delay: 0.8s; }
+.radar-ring.r3 { animation-delay: 1.6s; }
+.radar-sweep {
+  position: absolute; inset: 0; border-radius: 9999px;
+  background: conic-gradient(from 0deg, hsl(var(--primary) / 0.45), transparent 30%);
+  animation: radar-sweep 3s linear infinite;
+  mask-image: radial-gradient(circle, black 60%, transparent 100%);
+}
+.radar-center {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px;
+  border-radius: 9999px; background: hsl(var(--primary));
+  box-shadow: 0 0 16px hsl(var(--primary) / 0.9);
+  transform: translate(-50%, -50%);
+}
+
+/* Hide scrollbar for horizontal chip rows (e.g. news categories) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -9,38 +9,1254 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SavedRouteImport } from './routes/saved'
+import { Route as RedeemRouteImport } from './routes/redeem'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as MeRouteImport } from './routes/me'
+import { Route as MarketRouteImport } from './routes/market'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as GetCreditsRouteImport } from './routes/get-credits'
+import { Route as GamesRouteImport } from './routes/games'
+import { Route as FacultiesRouteImport } from './routes/faculties'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as BookshelfRouteImport } from './routes/bookshelf'
+import { Route as BooksRouteImport } from './routes/books'
+import { Route as ApplyBadgeRouteImport } from './routes/apply-badge'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NotesIndexRouteImport } from './routes/notes.index'
+import { Route as MarketIndexRouteImport } from './routes/market.index'
+import { Route as CoursesIndexRouteImport } from './routes/courses.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as ToolsYoutubeRouteImport } from './routes/tools.youtube'
+import { Route as ToolsVoiceCloneRouteImport } from './routes/tools.voice-clone'
+import { Route as ToolsVocalSplitRouteImport } from './routes/tools.vocal-split'
+import { Route as ToolsVnum3RouteImport } from './routes/tools.vnum3'
+import { Route as ToolsVnum2RouteImport } from './routes/tools.vnum2'
+import { Route as ToolsVnum1RouteImport } from './routes/tools.vnum1'
+import { Route as ToolsQrRouteImport } from './routes/tools.qr'
+import { Route as ToolsPlanetsRouteImport } from './routes/tools.planets'
+import { Route as ToolsPdfRouteImport } from './routes/tools.pdf'
+import { Route as ToolsOcrRouteImport } from './routes/tools.ocr'
+import { Route as ToolsNotifCleanRouteImport } from './routes/tools.notif-clean'
+import { Route as ToolsDictionaryRouteImport } from './routes/tools.dictionary'
+import { Route as ToolsCalculatorRouteImport } from './routes/tools.calculator'
+import { Route as ToolsAudioConvertRouteImport } from './routes/tools.audio-convert'
+import { Route as TicketsIdRouteImport } from './routes/tickets.$id'
+import { Route as ProfileIdRouteImport } from './routes/profile.$id'
+import { Route as PostNewRouteImport } from './routes/post.new'
+import { Route as PostIdRouteImport } from './routes/post.$id'
+import { Route as NotesIdRouteImport } from './routes/notes.$id'
+import { Route as NewsSlugRouteImport } from './routes/news_.$slug'
+import { Route as MarketNewRouteImport } from './routes/market.new'
+import { Route as MarketIdRouteImport } from './routes/market.$id'
+import { Route as GuidesEbsuFeesRouteImport } from './routes/guides.ebsu-fees'
+import { Route as GamesRiddleRouteImport } from './routes/games.riddle'
+import { Route as GamesPuzzleRouteImport } from './routes/games.puzzle'
+import { Route as GamesFreegamesRouteImport } from './routes/games.freegames'
+import { Route as GamesEightballRouteImport } from './routes/games.eightball'
+import { Route as FacultyIdRouteImport } from './routes/faculty.$id'
+import { Route as DepartmentIdRouteImport } from './routes/department.$id'
+import { Route as CoursesIdRouteImport } from './routes/courses.$id'
+import { Route as CourseIdRouteImport } from './routes/course.$id'
+import { Route as BooksComposerRouteImport } from './routes/books_.composer'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as ApiYoutubeRouteImport } from './routes/api/youtube'
+import { Route as ApiRiddleRouteImport } from './routes/api/riddle'
+import { Route as ApiNewsRouteImport } from './routes/api/news'
+import { Route as ApiFreegamesRouteImport } from './routes/api/freegames'
+import { Route as ApiEightballRouteImport } from './routes/api/eightball'
+import { Route as ApiDictionaryRouteImport } from './routes/api/dictionary'
+import { Route as ApiBootprintRouteImport } from './routes/api/bootprint'
+import { Route as BooksComposerIndexRouteImport } from './routes/books_.composer.index'
+import { Route as ToolsAiSlugRouteImport } from './routes/tools.ai.$slug'
+import { Route as BooksReadIdRouteImport } from './routes/books_.read.$id'
+import { Route as BooksComposerBookIdRouteImport } from './routes/books_.composer.$bookId'
+import { Route as ApiPublicVoiceCloneRouteImport } from './routes/api/public/voice-clone'
+import { Route as ApiPublicVocalSplitV2RouteImport } from './routes/api/public/vocal-split-v2'
+import { Route as ApiPublicVocalSplitRouteImport } from './routes/api/public/vocal-split'
+import { Route as ApiPublicVirtualNumberRouteImport } from './routes/api/public/virtual-number'
+import { Route as ApiPublicPlugAiRouteImport } from './routes/api/public/plug-ai'
+import { Route as ApiPublicHooksSyncLibraryBooksRouteImport } from './routes/api/public/hooks/sync-library-books'
+import { Route as ApiPublicHooksSyncCoursesRouteImport } from './routes/api/public/hooks/sync-courses'
+import { Route as ApiPublicHooksRunScheduledAdminRouteImport } from './routes/api/public/hooks/run-scheduled-admin'
+import { Route as ApiPublicHooksGenerateNovelRouteImport } from './routes/api/public/hooks/generate-novel'
+import { Route as ApiPublicHooksGenerateBookCoversRouteImport } from './routes/api/public/hooks/generate-book-covers'
+import { Route as ApiPublicHooksCacheBookPdfRouteImport } from './routes/api/public/hooks/cache-book-pdf'
+import { Route as ApiPublicHooksAutoEbsuNewsRouteImport } from './routes/api/public/hooks/auto-ebsu-news'
+import { Route as ApiPublicHooksAdminAiPulseRouteImport } from './routes/api/public/hooks/admin-ai-pulse'
 
+const ToolsRoute = ToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeemRoute = RedeemRouteImport.update({
+  id: '/redeem',
+  path: '/redeem',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketRoute = MarketRouteImport.update({
+  id: '/market',
+  path: '/market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetCreditsRoute = GetCreditsRouteImport.update({
+  id: '/get-credits',
+  path: '/get-credits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacultiesRoute = FacultiesRouteImport.update({
+  id: '/faculties',
+  path: '/faculties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookshelfRoute = BookshelfRouteImport.update({
+  id: '/bookshelf',
+  path: '/bookshelf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksRoute = BooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyBadgeRoute = ApplyBadgeRouteImport.update({
+  id: '/apply-badge',
+  path: '/apply-badge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotesIndexRoute = NotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketIndexRoute = MarketIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketRoute,
+} as any)
+const CoursesIndexRoute = CoursesIndexRouteImport.update({
+  id: '/courses/',
+  path: '/courses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsYoutubeRoute = ToolsYoutubeRouteImport.update({
+  id: '/youtube',
+  path: '/youtube',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsVoiceCloneRoute = ToolsVoiceCloneRouteImport.update({
+  id: '/voice-clone',
+  path: '/voice-clone',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsVocalSplitRoute = ToolsVocalSplitRouteImport.update({
+  id: '/vocal-split',
+  path: '/vocal-split',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsVnum3Route = ToolsVnum3RouteImport.update({
+  id: '/vnum3',
+  path: '/vnum3',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsVnum2Route = ToolsVnum2RouteImport.update({
+  id: '/vnum2',
+  path: '/vnum2',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsVnum1Route = ToolsVnum1RouteImport.update({
+  id: '/vnum1',
+  path: '/vnum1',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsQrRoute = ToolsQrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsPlanetsRoute = ToolsPlanetsRouteImport.update({
+  id: '/planets',
+  path: '/planets',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsPdfRoute = ToolsPdfRouteImport.update({
+  id: '/pdf',
+  path: '/pdf',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsOcrRoute = ToolsOcrRouteImport.update({
+  id: '/ocr',
+  path: '/ocr',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsNotifCleanRoute = ToolsNotifCleanRouteImport.update({
+  id: '/notif-clean',
+  path: '/notif-clean',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsDictionaryRoute = ToolsDictionaryRouteImport.update({
+  id: '/dictionary',
+  path: '/dictionary',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsCalculatorRoute = ToolsCalculatorRouteImport.update({
+  id: '/calculator',
+  path: '/calculator',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsAudioConvertRoute = ToolsAudioConvertRouteImport.update({
+  id: '/audio-convert',
+  path: '/audio-convert',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const TicketsIdRoute = TicketsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TicketsRoute,
+} as any)
+const ProfileIdRoute = ProfileIdRouteImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostNewRoute = PostNewRouteImport.update({
+  id: '/post/new',
+  path: '/post/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostIdRoute = PostIdRouteImport.update({
+  id: '/post/$id',
+  path: '/post/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesIdRoute = NotesIdRouteImport.update({
+  id: '/notes/$id',
+  path: '/notes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/news_/$slug',
+  path: '/news/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketNewRoute = MarketNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => MarketRoute,
+} as any)
+const MarketIdRoute = MarketIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MarketRoute,
+} as any)
+const GuidesEbsuFeesRoute = GuidesEbsuFeesRouteImport.update({
+  id: '/guides/ebsu-fees',
+  path: '/guides/ebsu-fees',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRiddleRoute = GamesRiddleRouteImport.update({
+  id: '/riddle',
+  path: '/riddle',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesPuzzleRoute = GamesPuzzleRouteImport.update({
+  id: '/puzzle',
+  path: '/puzzle',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesFreegamesRoute = GamesFreegamesRouteImport.update({
+  id: '/freegames',
+  path: '/freegames',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesEightballRoute = GamesEightballRouteImport.update({
+  id: '/eightball',
+  path: '/eightball',
+  getParentRoute: () => GamesRoute,
+} as any)
+const FacultyIdRoute = FacultyIdRouteImport.update({
+  id: '/faculty/$id',
+  path: '/faculty/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepartmentIdRoute = DepartmentIdRouteImport.update({
+  id: '/department/$id',
+  path: '/department/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesIdRoute = CoursesIdRouteImport.update({
+  id: '/courses/$id',
+  path: '/courses/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CourseIdRoute = CourseIdRouteImport.update({
+  id: '/course/$id',
+  path: '/course/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksComposerRoute = BooksComposerRouteImport.update({
+  id: '/books_/composer',
+  path: '/books/composer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiYoutubeRoute = ApiYoutubeRouteImport.update({
+  id: '/api/youtube',
+  path: '/api/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRiddleRoute = ApiRiddleRouteImport.update({
+  id: '/api/riddle',
+  path: '/api/riddle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsRoute = ApiNewsRouteImport.update({
+  id: '/api/news',
+  path: '/api/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFreegamesRoute = ApiFreegamesRouteImport.update({
+  id: '/api/freegames',
+  path: '/api/freegames',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEightballRoute = ApiEightballRouteImport.update({
+  id: '/api/eightball',
+  path: '/api/eightball',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDictionaryRoute = ApiDictionaryRouteImport.update({
+  id: '/api/dictionary',
+  path: '/api/dictionary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBootprintRoute = ApiBootprintRouteImport.update({
+  id: '/api/bootprint',
+  path: '/api/bootprint',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksComposerIndexRoute = BooksComposerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BooksComposerRoute,
+} as any)
+const ToolsAiSlugRoute = ToolsAiSlugRouteImport.update({
+  id: '/ai/$slug',
+  path: '/ai/$slug',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const BooksReadIdRoute = BooksReadIdRouteImport.update({
+  id: '/books_/read/$id',
+  path: '/books/read/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksComposerBookIdRoute = BooksComposerBookIdRouteImport.update({
+  id: '/$bookId',
+  path: '/$bookId',
+  getParentRoute: () => BooksComposerRoute,
+} as any)
+const ApiPublicVoiceCloneRoute = ApiPublicVoiceCloneRouteImport.update({
+  id: '/api/public/voice-clone',
+  path: '/api/public/voice-clone',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVocalSplitV2Route = ApiPublicVocalSplitV2RouteImport.update({
+  id: '/api/public/vocal-split-v2',
+  path: '/api/public/vocal-split-v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVocalSplitRoute = ApiPublicVocalSplitRouteImport.update({
+  id: '/api/public/vocal-split',
+  path: '/api/public/vocal-split',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVirtualNumberRoute = ApiPublicVirtualNumberRouteImport.update({
+  id: '/api/public/virtual-number',
+  path: '/api/public/virtual-number',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPlugAiRoute = ApiPublicPlugAiRouteImport.update({
+  id: '/api/public/plug-ai',
+  path: '/api/public/plug-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksSyncLibraryBooksRoute =
+  ApiPublicHooksSyncLibraryBooksRouteImport.update({
+    id: '/api/public/hooks/sync-library-books',
+    path: '/api/public/hooks/sync-library-books',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncCoursesRoute =
+  ApiPublicHooksSyncCoursesRouteImport.update({
+    id: '/api/public/hooks/sync-courses',
+    path: '/api/public/hooks/sync-courses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRunScheduledAdminRoute =
+  ApiPublicHooksRunScheduledAdminRouteImport.update({
+    id: '/api/public/hooks/run-scheduled-admin',
+    path: '/api/public/hooks/run-scheduled-admin',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksGenerateNovelRoute =
+  ApiPublicHooksGenerateNovelRouteImport.update({
+    id: '/api/public/hooks/generate-novel',
+    path: '/api/public/hooks/generate-novel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksGenerateBookCoversRoute =
+  ApiPublicHooksGenerateBookCoversRouteImport.update({
+    id: '/api/public/hooks/generate-book-covers',
+    path: '/api/public/hooks/generate-book-covers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCacheBookPdfRoute =
+  ApiPublicHooksCacheBookPdfRouteImport.update({
+    id: '/api/public/hooks/cache-book-pdf',
+    path: '/api/public/hooks/cache-book-pdf',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAutoEbsuNewsRoute =
+  ApiPublicHooksAutoEbsuNewsRouteImport.update({
+    id: '/api/public/hooks/auto-ebsu-news',
+    path: '/api/public/hooks/auto-ebsu-news',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAdminAiPulseRoute =
+  ApiPublicHooksAdminAiPulseRouteImport.update({
+    id: '/api/public/hooks/admin-ai-pulse',
+    path: '/api/public/hooks/admin-ai-pulse',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
+  '/apply-badge': typeof ApplyBadgeRoute
+  '/books': typeof BooksRoute
+  '/bookshelf': typeof BookshelfRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/faculties': typeof FacultiesRoute
+  '/games': typeof GamesRouteWithChildren
+  '/get-credits': typeof GetCreditsRoute
+  '/login': typeof LoginRoute
+  '/market': typeof MarketRouteWithChildren
+  '/me': typeof MeRoute
+  '/news': typeof NewsRoute
+  '/privacy': typeof PrivacyRoute
+  '/redeem': typeof RedeemRoute
+  '/saved': typeof SavedRoute
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/tools': typeof ToolsRouteWithChildren
+  '/api/bootprint': typeof ApiBootprintRoute
+  '/api/dictionary': typeof ApiDictionaryRoute
+  '/api/eightball': typeof ApiEightballRoute
+  '/api/freegames': typeof ApiFreegamesRoute
+  '/api/news': typeof ApiNewsRoute
+  '/api/riddle': typeof ApiRiddleRoute
+  '/api/youtube': typeof ApiYoutubeRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/books/composer': typeof BooksComposerRouteWithChildren
+  '/course/$id': typeof CourseIdRoute
+  '/courses/$id': typeof CoursesIdRoute
+  '/department/$id': typeof DepartmentIdRoute
+  '/faculty/$id': typeof FacultyIdRoute
+  '/games/eightball': typeof GamesEightballRoute
+  '/games/freegames': typeof GamesFreegamesRoute
+  '/games/puzzle': typeof GamesPuzzleRoute
+  '/games/riddle': typeof GamesRiddleRoute
+  '/guides/ebsu-fees': typeof GuidesEbsuFeesRoute
+  '/market/$id': typeof MarketIdRoute
+  '/market/new': typeof MarketNewRoute
+  '/news/$slug': typeof NewsSlugRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/post/$id': typeof PostIdRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/tickets/$id': typeof TicketsIdRoute
+  '/tools/audio-convert': typeof ToolsAudioConvertRoute
+  '/tools/calculator': typeof ToolsCalculatorRoute
+  '/tools/dictionary': typeof ToolsDictionaryRoute
+  '/tools/notif-clean': typeof ToolsNotifCleanRoute
+  '/tools/ocr': typeof ToolsOcrRoute
+  '/tools/pdf': typeof ToolsPdfRoute
+  '/tools/planets': typeof ToolsPlanetsRoute
+  '/tools/qr': typeof ToolsQrRoute
+  '/tools/vnum1': typeof ToolsVnum1Route
+  '/tools/vnum2': typeof ToolsVnum2Route
+  '/tools/vnum3': typeof ToolsVnum3Route
+  '/tools/vocal-split': typeof ToolsVocalSplitRoute
+  '/tools/voice-clone': typeof ToolsVoiceCloneRoute
+  '/tools/youtube': typeof ToolsYoutubeRoute
+  '/blog/': typeof BlogIndexRoute
+  '/courses/': typeof CoursesIndexRoute
+  '/market/': typeof MarketIndexRoute
+  '/notes/': typeof NotesIndexRoute
+  '/api/public/plug-ai': typeof ApiPublicPlugAiRoute
+  '/api/public/virtual-number': typeof ApiPublicVirtualNumberRoute
+  '/api/public/vocal-split': typeof ApiPublicVocalSplitRoute
+  '/api/public/vocal-split-v2': typeof ApiPublicVocalSplitV2Route
+  '/api/public/voice-clone': typeof ApiPublicVoiceCloneRoute
+  '/books/composer/$bookId': typeof BooksComposerBookIdRoute
+  '/books/read/$id': typeof BooksReadIdRoute
+  '/tools/ai/$slug': typeof ToolsAiSlugRoute
+  '/books/composer/': typeof BooksComposerIndexRoute
+  '/api/public/hooks/admin-ai-pulse': typeof ApiPublicHooksAdminAiPulseRoute
+  '/api/public/hooks/auto-ebsu-news': typeof ApiPublicHooksAutoEbsuNewsRoute
+  '/api/public/hooks/cache-book-pdf': typeof ApiPublicHooksCacheBookPdfRoute
+  '/api/public/hooks/generate-book-covers': typeof ApiPublicHooksGenerateBookCoversRoute
+  '/api/public/hooks/generate-novel': typeof ApiPublicHooksGenerateNovelRoute
+  '/api/public/hooks/run-scheduled-admin': typeof ApiPublicHooksRunScheduledAdminRoute
+  '/api/public/hooks/sync-courses': typeof ApiPublicHooksSyncCoursesRoute
+  '/api/public/hooks/sync-library-books': typeof ApiPublicHooksSyncLibraryBooksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
+  '/apply-badge': typeof ApplyBadgeRoute
+  '/books': typeof BooksRoute
+  '/bookshelf': typeof BookshelfRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/faculties': typeof FacultiesRoute
+  '/games': typeof GamesRouteWithChildren
+  '/get-credits': typeof GetCreditsRoute
+  '/login': typeof LoginRoute
+  '/me': typeof MeRoute
+  '/news': typeof NewsRoute
+  '/privacy': typeof PrivacyRoute
+  '/redeem': typeof RedeemRoute
+  '/saved': typeof SavedRoute
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/tools': typeof ToolsRouteWithChildren
+  '/api/bootprint': typeof ApiBootprintRoute
+  '/api/dictionary': typeof ApiDictionaryRoute
+  '/api/eightball': typeof ApiEightballRoute
+  '/api/freegames': typeof ApiFreegamesRoute
+  '/api/news': typeof ApiNewsRoute
+  '/api/riddle': typeof ApiRiddleRoute
+  '/api/youtube': typeof ApiYoutubeRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/course/$id': typeof CourseIdRoute
+  '/courses/$id': typeof CoursesIdRoute
+  '/department/$id': typeof DepartmentIdRoute
+  '/faculty/$id': typeof FacultyIdRoute
+  '/games/eightball': typeof GamesEightballRoute
+  '/games/freegames': typeof GamesFreegamesRoute
+  '/games/puzzle': typeof GamesPuzzleRoute
+  '/games/riddle': typeof GamesRiddleRoute
+  '/guides/ebsu-fees': typeof GuidesEbsuFeesRoute
+  '/market/$id': typeof MarketIdRoute
+  '/market/new': typeof MarketNewRoute
+  '/news/$slug': typeof NewsSlugRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/post/$id': typeof PostIdRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/tickets/$id': typeof TicketsIdRoute
+  '/tools/audio-convert': typeof ToolsAudioConvertRoute
+  '/tools/calculator': typeof ToolsCalculatorRoute
+  '/tools/dictionary': typeof ToolsDictionaryRoute
+  '/tools/notif-clean': typeof ToolsNotifCleanRoute
+  '/tools/ocr': typeof ToolsOcrRoute
+  '/tools/pdf': typeof ToolsPdfRoute
+  '/tools/planets': typeof ToolsPlanetsRoute
+  '/tools/qr': typeof ToolsQrRoute
+  '/tools/vnum1': typeof ToolsVnum1Route
+  '/tools/vnum2': typeof ToolsVnum2Route
+  '/tools/vnum3': typeof ToolsVnum3Route
+  '/tools/vocal-split': typeof ToolsVocalSplitRoute
+  '/tools/voice-clone': typeof ToolsVoiceCloneRoute
+  '/tools/youtube': typeof ToolsYoutubeRoute
+  '/blog': typeof BlogIndexRoute
+  '/courses': typeof CoursesIndexRoute
+  '/market': typeof MarketIndexRoute
+  '/notes': typeof NotesIndexRoute
+  '/api/public/plug-ai': typeof ApiPublicPlugAiRoute
+  '/api/public/virtual-number': typeof ApiPublicVirtualNumberRoute
+  '/api/public/vocal-split': typeof ApiPublicVocalSplitRoute
+  '/api/public/vocal-split-v2': typeof ApiPublicVocalSplitV2Route
+  '/api/public/voice-clone': typeof ApiPublicVoiceCloneRoute
+  '/books/composer/$bookId': typeof BooksComposerBookIdRoute
+  '/books/read/$id': typeof BooksReadIdRoute
+  '/tools/ai/$slug': typeof ToolsAiSlugRoute
+  '/books/composer': typeof BooksComposerIndexRoute
+  '/api/public/hooks/admin-ai-pulse': typeof ApiPublicHooksAdminAiPulseRoute
+  '/api/public/hooks/auto-ebsu-news': typeof ApiPublicHooksAutoEbsuNewsRoute
+  '/api/public/hooks/cache-book-pdf': typeof ApiPublicHooksCacheBookPdfRoute
+  '/api/public/hooks/generate-book-covers': typeof ApiPublicHooksGenerateBookCoversRoute
+  '/api/public/hooks/generate-novel': typeof ApiPublicHooksGenerateNovelRoute
+  '/api/public/hooks/run-scheduled-admin': typeof ApiPublicHooksRunScheduledAdminRoute
+  '/api/public/hooks/sync-courses': typeof ApiPublicHooksSyncCoursesRoute
+  '/api/public/hooks/sync-library-books': typeof ApiPublicHooksSyncLibraryBooksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
+  '/apply-badge': typeof ApplyBadgeRoute
+  '/books': typeof BooksRoute
+  '/bookshelf': typeof BookshelfRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/faculties': typeof FacultiesRoute
+  '/games': typeof GamesRouteWithChildren
+  '/get-credits': typeof GetCreditsRoute
+  '/login': typeof LoginRoute
+  '/market': typeof MarketRouteWithChildren
+  '/me': typeof MeRoute
+  '/news': typeof NewsRoute
+  '/privacy': typeof PrivacyRoute
+  '/redeem': typeof RedeemRoute
+  '/saved': typeof SavedRoute
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/tools': typeof ToolsRouteWithChildren
+  '/api/bootprint': typeof ApiBootprintRoute
+  '/api/dictionary': typeof ApiDictionaryRoute
+  '/api/eightball': typeof ApiEightballRoute
+  '/api/freegames': typeof ApiFreegamesRoute
+  '/api/news': typeof ApiNewsRoute
+  '/api/riddle': typeof ApiRiddleRoute
+  '/api/youtube': typeof ApiYoutubeRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/books_/composer': typeof BooksComposerRouteWithChildren
+  '/course/$id': typeof CourseIdRoute
+  '/courses/$id': typeof CoursesIdRoute
+  '/department/$id': typeof DepartmentIdRoute
+  '/faculty/$id': typeof FacultyIdRoute
+  '/games/eightball': typeof GamesEightballRoute
+  '/games/freegames': typeof GamesFreegamesRoute
+  '/games/puzzle': typeof GamesPuzzleRoute
+  '/games/riddle': typeof GamesRiddleRoute
+  '/guides/ebsu-fees': typeof GuidesEbsuFeesRoute
+  '/market/$id': typeof MarketIdRoute
+  '/market/new': typeof MarketNewRoute
+  '/news_/$slug': typeof NewsSlugRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/post/$id': typeof PostIdRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/tickets/$id': typeof TicketsIdRoute
+  '/tools/audio-convert': typeof ToolsAudioConvertRoute
+  '/tools/calculator': typeof ToolsCalculatorRoute
+  '/tools/dictionary': typeof ToolsDictionaryRoute
+  '/tools/notif-clean': typeof ToolsNotifCleanRoute
+  '/tools/ocr': typeof ToolsOcrRoute
+  '/tools/pdf': typeof ToolsPdfRoute
+  '/tools/planets': typeof ToolsPlanetsRoute
+  '/tools/qr': typeof ToolsQrRoute
+  '/tools/vnum1': typeof ToolsVnum1Route
+  '/tools/vnum2': typeof ToolsVnum2Route
+  '/tools/vnum3': typeof ToolsVnum3Route
+  '/tools/vocal-split': typeof ToolsVocalSplitRoute
+  '/tools/voice-clone': typeof ToolsVoiceCloneRoute
+  '/tools/youtube': typeof ToolsYoutubeRoute
+  '/blog/': typeof BlogIndexRoute
+  '/courses/': typeof CoursesIndexRoute
+  '/market/': typeof MarketIndexRoute
+  '/notes/': typeof NotesIndexRoute
+  '/api/public/plug-ai': typeof ApiPublicPlugAiRoute
+  '/api/public/virtual-number': typeof ApiPublicVirtualNumberRoute
+  '/api/public/vocal-split': typeof ApiPublicVocalSplitRoute
+  '/api/public/vocal-split-v2': typeof ApiPublicVocalSplitV2Route
+  '/api/public/voice-clone': typeof ApiPublicVoiceCloneRoute
+  '/books_/composer/$bookId': typeof BooksComposerBookIdRoute
+  '/books_/read/$id': typeof BooksReadIdRoute
+  '/tools/ai/$slug': typeof ToolsAiSlugRoute
+  '/books_/composer/': typeof BooksComposerIndexRoute
+  '/api/public/hooks/admin-ai-pulse': typeof ApiPublicHooksAdminAiPulseRoute
+  '/api/public/hooks/auto-ebsu-news': typeof ApiPublicHooksAutoEbsuNewsRoute
+  '/api/public/hooks/cache-book-pdf': typeof ApiPublicHooksCacheBookPdfRoute
+  '/api/public/hooks/generate-book-covers': typeof ApiPublicHooksGenerateBookCoversRoute
+  '/api/public/hooks/generate-novel': typeof ApiPublicHooksGenerateNovelRoute
+  '/api/public/hooks/run-scheduled-admin': typeof ApiPublicHooksRunScheduledAdminRoute
+  '/api/public/hooks/sync-courses': typeof ApiPublicHooksSyncCoursesRoute
+  '/api/public/hooks/sync-library-books': typeof ApiPublicHooksSyncLibraryBooksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/apply-badge'
+    | '/books'
+    | '/bookshelf'
+    | '/chat'
+    | '/contact'
+    | '/faculties'
+    | '/games'
+    | '/get-credits'
+    | '/login'
+    | '/market'
+    | '/me'
+    | '/news'
+    | '/privacy'
+    | '/redeem'
+    | '/saved'
+    | '/search'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/tickets'
+    | '/tools'
+    | '/api/bootprint'
+    | '/api/dictionary'
+    | '/api/eightball'
+    | '/api/freegames'
+    | '/api/news'
+    | '/api/riddle'
+    | '/api/youtube'
+    | '/blog/$slug'
+    | '/books/composer'
+    | '/course/$id'
+    | '/courses/$id'
+    | '/department/$id'
+    | '/faculty/$id'
+    | '/games/eightball'
+    | '/games/freegames'
+    | '/games/puzzle'
+    | '/games/riddle'
+    | '/guides/ebsu-fees'
+    | '/market/$id'
+    | '/market/new'
+    | '/news/$slug'
+    | '/notes/$id'
+    | '/post/$id'
+    | '/post/new'
+    | '/profile/$id'
+    | '/tickets/$id'
+    | '/tools/audio-convert'
+    | '/tools/calculator'
+    | '/tools/dictionary'
+    | '/tools/notif-clean'
+    | '/tools/ocr'
+    | '/tools/pdf'
+    | '/tools/planets'
+    | '/tools/qr'
+    | '/tools/vnum1'
+    | '/tools/vnum2'
+    | '/tools/vnum3'
+    | '/tools/vocal-split'
+    | '/tools/voice-clone'
+    | '/tools/youtube'
+    | '/blog/'
+    | '/courses/'
+    | '/market/'
+    | '/notes/'
+    | '/api/public/plug-ai'
+    | '/api/public/virtual-number'
+    | '/api/public/vocal-split'
+    | '/api/public/vocal-split-v2'
+    | '/api/public/voice-clone'
+    | '/books/composer/$bookId'
+    | '/books/read/$id'
+    | '/tools/ai/$slug'
+    | '/books/composer/'
+    | '/api/public/hooks/admin-ai-pulse'
+    | '/api/public/hooks/auto-ebsu-news'
+    | '/api/public/hooks/cache-book-pdf'
+    | '/api/public/hooks/generate-book-covers'
+    | '/api/public/hooks/generate-novel'
+    | '/api/public/hooks/run-scheduled-admin'
+    | '/api/public/hooks/sync-courses'
+    | '/api/public/hooks/sync-library-books'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/apply-badge'
+    | '/books'
+    | '/bookshelf'
+    | '/chat'
+    | '/contact'
+    | '/faculties'
+    | '/games'
+    | '/get-credits'
+    | '/login'
+    | '/me'
+    | '/news'
+    | '/privacy'
+    | '/redeem'
+    | '/saved'
+    | '/search'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/tickets'
+    | '/tools'
+    | '/api/bootprint'
+    | '/api/dictionary'
+    | '/api/eightball'
+    | '/api/freegames'
+    | '/api/news'
+    | '/api/riddle'
+    | '/api/youtube'
+    | '/blog/$slug'
+    | '/course/$id'
+    | '/courses/$id'
+    | '/department/$id'
+    | '/faculty/$id'
+    | '/games/eightball'
+    | '/games/freegames'
+    | '/games/puzzle'
+    | '/games/riddle'
+    | '/guides/ebsu-fees'
+    | '/market/$id'
+    | '/market/new'
+    | '/news/$slug'
+    | '/notes/$id'
+    | '/post/$id'
+    | '/post/new'
+    | '/profile/$id'
+    | '/tickets/$id'
+    | '/tools/audio-convert'
+    | '/tools/calculator'
+    | '/tools/dictionary'
+    | '/tools/notif-clean'
+    | '/tools/ocr'
+    | '/tools/pdf'
+    | '/tools/planets'
+    | '/tools/qr'
+    | '/tools/vnum1'
+    | '/tools/vnum2'
+    | '/tools/vnum3'
+    | '/tools/vocal-split'
+    | '/tools/voice-clone'
+    | '/tools/youtube'
+    | '/blog'
+    | '/courses'
+    | '/market'
+    | '/notes'
+    | '/api/public/plug-ai'
+    | '/api/public/virtual-number'
+    | '/api/public/vocal-split'
+    | '/api/public/vocal-split-v2'
+    | '/api/public/voice-clone'
+    | '/books/composer/$bookId'
+    | '/books/read/$id'
+    | '/tools/ai/$slug'
+    | '/books/composer'
+    | '/api/public/hooks/admin-ai-pulse'
+    | '/api/public/hooks/auto-ebsu-news'
+    | '/api/public/hooks/cache-book-pdf'
+    | '/api/public/hooks/generate-book-covers'
+    | '/api/public/hooks/generate-novel'
+    | '/api/public/hooks/run-scheduled-admin'
+    | '/api/public/hooks/sync-courses'
+    | '/api/public/hooks/sync-library-books'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/apply-badge'
+    | '/books'
+    | '/bookshelf'
+    | '/chat'
+    | '/contact'
+    | '/faculties'
+    | '/games'
+    | '/get-credits'
+    | '/login'
+    | '/market'
+    | '/me'
+    | '/news'
+    | '/privacy'
+    | '/redeem'
+    | '/saved'
+    | '/search'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/tickets'
+    | '/tools'
+    | '/api/bootprint'
+    | '/api/dictionary'
+    | '/api/eightball'
+    | '/api/freegames'
+    | '/api/news'
+    | '/api/riddle'
+    | '/api/youtube'
+    | '/blog/$slug'
+    | '/books_/composer'
+    | '/course/$id'
+    | '/courses/$id'
+    | '/department/$id'
+    | '/faculty/$id'
+    | '/games/eightball'
+    | '/games/freegames'
+    | '/games/puzzle'
+    | '/games/riddle'
+    | '/guides/ebsu-fees'
+    | '/market/$id'
+    | '/market/new'
+    | '/news_/$slug'
+    | '/notes/$id'
+    | '/post/$id'
+    | '/post/new'
+    | '/profile/$id'
+    | '/tickets/$id'
+    | '/tools/audio-convert'
+    | '/tools/calculator'
+    | '/tools/dictionary'
+    | '/tools/notif-clean'
+    | '/tools/ocr'
+    | '/tools/pdf'
+    | '/tools/planets'
+    | '/tools/qr'
+    | '/tools/vnum1'
+    | '/tools/vnum2'
+    | '/tools/vnum3'
+    | '/tools/vocal-split'
+    | '/tools/voice-clone'
+    | '/tools/youtube'
+    | '/blog/'
+    | '/courses/'
+    | '/market/'
+    | '/notes/'
+    | '/api/public/plug-ai'
+    | '/api/public/virtual-number'
+    | '/api/public/vocal-split'
+    | '/api/public/vocal-split-v2'
+    | '/api/public/voice-clone'
+    | '/books_/composer/$bookId'
+    | '/books_/read/$id'
+    | '/tools/ai/$slug'
+    | '/books_/composer/'
+    | '/api/public/hooks/admin-ai-pulse'
+    | '/api/public/hooks/auto-ebsu-news'
+    | '/api/public/hooks/cache-book-pdf'
+    | '/api/public/hooks/generate-book-covers'
+    | '/api/public/hooks/generate-novel'
+    | '/api/public/hooks/run-scheduled-admin'
+    | '/api/public/hooks/sync-courses'
+    | '/api/public/hooks/sync-library-books'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRoute
+  ApplyBadgeRoute: typeof ApplyBadgeRoute
+  BooksRoute: typeof BooksRoute
+  BookshelfRoute: typeof BookshelfRoute
+  ChatRoute: typeof ChatRoute
+  ContactRoute: typeof ContactRoute
+  FacultiesRoute: typeof FacultiesRoute
+  GamesRoute: typeof GamesRouteWithChildren
+  GetCreditsRoute: typeof GetCreditsRoute
+  LoginRoute: typeof LoginRoute
+  MarketRoute: typeof MarketRouteWithChildren
+  MeRoute: typeof MeRoute
+  NewsRoute: typeof NewsRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RedeemRoute: typeof RedeemRoute
+  SavedRoute: typeof SavedRoute
+  SearchRoute: typeof SearchRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
+  TicketsRoute: typeof TicketsRouteWithChildren
+  ToolsRoute: typeof ToolsRouteWithChildren
+  ApiBootprintRoute: typeof ApiBootprintRoute
+  ApiDictionaryRoute: typeof ApiDictionaryRoute
+  ApiEightballRoute: typeof ApiEightballRoute
+  ApiFreegamesRoute: typeof ApiFreegamesRoute
+  ApiNewsRoute: typeof ApiNewsRoute
+  ApiRiddleRoute: typeof ApiRiddleRoute
+  ApiYoutubeRoute: typeof ApiYoutubeRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BooksComposerRoute: typeof BooksComposerRouteWithChildren
+  CourseIdRoute: typeof CourseIdRoute
+  CoursesIdRoute: typeof CoursesIdRoute
+  DepartmentIdRoute: typeof DepartmentIdRoute
+  FacultyIdRoute: typeof FacultyIdRoute
+  GuidesEbsuFeesRoute: typeof GuidesEbsuFeesRoute
+  NewsSlugRoute: typeof NewsSlugRoute
+  NotesIdRoute: typeof NotesIdRoute
+  PostIdRoute: typeof PostIdRoute
+  PostNewRoute: typeof PostNewRoute
+  ProfileIdRoute: typeof ProfileIdRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+  CoursesIndexRoute: typeof CoursesIndexRoute
+  NotesIndexRoute: typeof NotesIndexRoute
+  ApiPublicPlugAiRoute: typeof ApiPublicPlugAiRoute
+  ApiPublicVirtualNumberRoute: typeof ApiPublicVirtualNumberRoute
+  ApiPublicVocalSplitRoute: typeof ApiPublicVocalSplitRoute
+  ApiPublicVocalSplitV2Route: typeof ApiPublicVocalSplitV2Route
+  ApiPublicVoiceCloneRoute: typeof ApiPublicVoiceCloneRoute
+  BooksReadIdRoute: typeof BooksReadIdRoute
+  ApiPublicHooksAdminAiPulseRoute: typeof ApiPublicHooksAdminAiPulseRoute
+  ApiPublicHooksAutoEbsuNewsRoute: typeof ApiPublicHooksAutoEbsuNewsRoute
+  ApiPublicHooksCacheBookPdfRoute: typeof ApiPublicHooksCacheBookPdfRoute
+  ApiPublicHooksGenerateBookCoversRoute: typeof ApiPublicHooksGenerateBookCoversRoute
+  ApiPublicHooksGenerateNovelRoute: typeof ApiPublicHooksGenerateNovelRoute
+  ApiPublicHooksRunScheduledAdminRoute: typeof ApiPublicHooksRunScheduledAdminRoute
+  ApiPublicHooksSyncCoursesRoute: typeof ApiPublicHooksSyncCoursesRoute
+  ApiPublicHooksSyncLibraryBooksRoute: typeof ApiPublicHooksSyncLibraryBooksRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tools': {
+      id: '/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redeem': {
+      id: '/redeem'
+      path: '/redeem'
+      fullPath: '/redeem'
+      preLoaderRoute: typeof RedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/market': {
+      id: '/market'
+      path: '/market'
+      fullPath: '/market'
+      preLoaderRoute: typeof MarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-credits': {
+      id: '/get-credits'
+      path: '/get-credits'
+      fullPath: '/get-credits'
+      preLoaderRoute: typeof GetCreditsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faculties': {
+      id: '/faculties'
+      path: '/faculties'
+      fullPath: '/faculties'
+      preLoaderRoute: typeof FacultiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookshelf': {
+      id: '/bookshelf'
+      path: '/bookshelf'
+      fullPath: '/bookshelf'
+      preLoaderRoute: typeof BookshelfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books': {
+      id: '/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof BooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply-badge': {
+      id: '/apply-badge'
+      path: '/apply-badge'
+      fullPath: '/apply-badge'
+      preLoaderRoute: typeof ApplyBadgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +1264,591 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes/': {
+      id: '/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof NotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/market/': {
+      id: '/market/'
+      path: '/'
+      fullPath: '/market/'
+      preLoaderRoute: typeof MarketIndexRouteImport
+      parentRoute: typeof MarketRoute
+    }
+    '/courses/': {
+      id: '/courses/'
+      path: '/courses'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof CoursesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/youtube': {
+      id: '/tools/youtube'
+      path: '/youtube'
+      fullPath: '/tools/youtube'
+      preLoaderRoute: typeof ToolsYoutubeRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/voice-clone': {
+      id: '/tools/voice-clone'
+      path: '/voice-clone'
+      fullPath: '/tools/voice-clone'
+      preLoaderRoute: typeof ToolsVoiceCloneRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/vocal-split': {
+      id: '/tools/vocal-split'
+      path: '/vocal-split'
+      fullPath: '/tools/vocal-split'
+      preLoaderRoute: typeof ToolsVocalSplitRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/vnum3': {
+      id: '/tools/vnum3'
+      path: '/vnum3'
+      fullPath: '/tools/vnum3'
+      preLoaderRoute: typeof ToolsVnum3RouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/vnum2': {
+      id: '/tools/vnum2'
+      path: '/vnum2'
+      fullPath: '/tools/vnum2'
+      preLoaderRoute: typeof ToolsVnum2RouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/vnum1': {
+      id: '/tools/vnum1'
+      path: '/vnum1'
+      fullPath: '/tools/vnum1'
+      preLoaderRoute: typeof ToolsVnum1RouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/qr': {
+      id: '/tools/qr'
+      path: '/qr'
+      fullPath: '/tools/qr'
+      preLoaderRoute: typeof ToolsQrRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/planets': {
+      id: '/tools/planets'
+      path: '/planets'
+      fullPath: '/tools/planets'
+      preLoaderRoute: typeof ToolsPlanetsRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/pdf': {
+      id: '/tools/pdf'
+      path: '/pdf'
+      fullPath: '/tools/pdf'
+      preLoaderRoute: typeof ToolsPdfRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/ocr': {
+      id: '/tools/ocr'
+      path: '/ocr'
+      fullPath: '/tools/ocr'
+      preLoaderRoute: typeof ToolsOcrRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/notif-clean': {
+      id: '/tools/notif-clean'
+      path: '/notif-clean'
+      fullPath: '/tools/notif-clean'
+      preLoaderRoute: typeof ToolsNotifCleanRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/dictionary': {
+      id: '/tools/dictionary'
+      path: '/dictionary'
+      fullPath: '/tools/dictionary'
+      preLoaderRoute: typeof ToolsDictionaryRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/calculator': {
+      id: '/tools/calculator'
+      path: '/calculator'
+      fullPath: '/tools/calculator'
+      preLoaderRoute: typeof ToolsCalculatorRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/audio-convert': {
+      id: '/tools/audio-convert'
+      path: '/audio-convert'
+      fullPath: '/tools/audio-convert'
+      preLoaderRoute: typeof ToolsAudioConvertRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tickets/$id': {
+      id: '/tickets/$id'
+      path: '/$id'
+      fullPath: '/tickets/$id'
+      preLoaderRoute: typeof TicketsIdRouteImport
+      parentRoute: typeof TicketsRoute
+    }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/post/new': {
+      id: '/post/new'
+      path: '/post/new'
+      fullPath: '/post/new'
+      preLoaderRoute: typeof PostNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/post/$id': {
+      id: '/post/$id'
+      path: '/post/$id'
+      fullPath: '/post/$id'
+      preLoaderRoute: typeof PostIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/$id': {
+      id: '/notes/$id'
+      path: '/notes/$id'
+      fullPath: '/notes/$id'
+      preLoaderRoute: typeof NotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news_/$slug': {
+      id: '/news_/$slug'
+      path: '/news/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/market/new': {
+      id: '/market/new'
+      path: '/new'
+      fullPath: '/market/new'
+      preLoaderRoute: typeof MarketNewRouteImport
+      parentRoute: typeof MarketRoute
+    }
+    '/market/$id': {
+      id: '/market/$id'
+      path: '/$id'
+      fullPath: '/market/$id'
+      preLoaderRoute: typeof MarketIdRouteImport
+      parentRoute: typeof MarketRoute
+    }
+    '/guides/ebsu-fees': {
+      id: '/guides/ebsu-fees'
+      path: '/guides/ebsu-fees'
+      fullPath: '/guides/ebsu-fees'
+      preLoaderRoute: typeof GuidesEbsuFeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/riddle': {
+      id: '/games/riddle'
+      path: '/riddle'
+      fullPath: '/games/riddle'
+      preLoaderRoute: typeof GamesRiddleRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/puzzle': {
+      id: '/games/puzzle'
+      path: '/puzzle'
+      fullPath: '/games/puzzle'
+      preLoaderRoute: typeof GamesPuzzleRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/freegames': {
+      id: '/games/freegames'
+      path: '/freegames'
+      fullPath: '/games/freegames'
+      preLoaderRoute: typeof GamesFreegamesRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/eightball': {
+      id: '/games/eightball'
+      path: '/eightball'
+      fullPath: '/games/eightball'
+      preLoaderRoute: typeof GamesEightballRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/faculty/$id': {
+      id: '/faculty/$id'
+      path: '/faculty/$id'
+      fullPath: '/faculty/$id'
+      preLoaderRoute: typeof FacultyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/department/$id': {
+      id: '/department/$id'
+      path: '/department/$id'
+      fullPath: '/department/$id'
+      preLoaderRoute: typeof DepartmentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses/$id': {
+      id: '/courses/$id'
+      path: '/courses/$id'
+      fullPath: '/courses/$id'
+      preLoaderRoute: typeof CoursesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/course/$id': {
+      id: '/course/$id'
+      path: '/course/$id'
+      fullPath: '/course/$id'
+      preLoaderRoute: typeof CourseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books_/composer': {
+      id: '/books_/composer'
+      path: '/books/composer'
+      fullPath: '/books/composer'
+      preLoaderRoute: typeof BooksComposerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/youtube': {
+      id: '/api/youtube'
+      path: '/api/youtube'
+      fullPath: '/api/youtube'
+      preLoaderRoute: typeof ApiYoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/riddle': {
+      id: '/api/riddle'
+      path: '/api/riddle'
+      fullPath: '/api/riddle'
+      preLoaderRoute: typeof ApiRiddleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/news': {
+      id: '/api/news'
+      path: '/api/news'
+      fullPath: '/api/news'
+      preLoaderRoute: typeof ApiNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/freegames': {
+      id: '/api/freegames'
+      path: '/api/freegames'
+      fullPath: '/api/freegames'
+      preLoaderRoute: typeof ApiFreegamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eightball': {
+      id: '/api/eightball'
+      path: '/api/eightball'
+      fullPath: '/api/eightball'
+      preLoaderRoute: typeof ApiEightballRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dictionary': {
+      id: '/api/dictionary'
+      path: '/api/dictionary'
+      fullPath: '/api/dictionary'
+      preLoaderRoute: typeof ApiDictionaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bootprint': {
+      id: '/api/bootprint'
+      path: '/api/bootprint'
+      fullPath: '/api/bootprint'
+      preLoaderRoute: typeof ApiBootprintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books_/composer/': {
+      id: '/books_/composer/'
+      path: '/'
+      fullPath: '/books/composer/'
+      preLoaderRoute: typeof BooksComposerIndexRouteImport
+      parentRoute: typeof BooksComposerRoute
+    }
+    '/tools/ai/$slug': {
+      id: '/tools/ai/$slug'
+      path: '/ai/$slug'
+      fullPath: '/tools/ai/$slug'
+      preLoaderRoute: typeof ToolsAiSlugRouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/books_/read/$id': {
+      id: '/books_/read/$id'
+      path: '/books/read/$id'
+      fullPath: '/books/read/$id'
+      preLoaderRoute: typeof BooksReadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books_/composer/$bookId': {
+      id: '/books_/composer/$bookId'
+      path: '/$bookId'
+      fullPath: '/books/composer/$bookId'
+      preLoaderRoute: typeof BooksComposerBookIdRouteImport
+      parentRoute: typeof BooksComposerRoute
+    }
+    '/api/public/voice-clone': {
+      id: '/api/public/voice-clone'
+      path: '/api/public/voice-clone'
+      fullPath: '/api/public/voice-clone'
+      preLoaderRoute: typeof ApiPublicVoiceCloneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vocal-split-v2': {
+      id: '/api/public/vocal-split-v2'
+      path: '/api/public/vocal-split-v2'
+      fullPath: '/api/public/vocal-split-v2'
+      preLoaderRoute: typeof ApiPublicVocalSplitV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vocal-split': {
+      id: '/api/public/vocal-split'
+      path: '/api/public/vocal-split'
+      fullPath: '/api/public/vocal-split'
+      preLoaderRoute: typeof ApiPublicVocalSplitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/virtual-number': {
+      id: '/api/public/virtual-number'
+      path: '/api/public/virtual-number'
+      fullPath: '/api/public/virtual-number'
+      preLoaderRoute: typeof ApiPublicVirtualNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/plug-ai': {
+      id: '/api/public/plug-ai'
+      path: '/api/public/plug-ai'
+      fullPath: '/api/public/plug-ai'
+      preLoaderRoute: typeof ApiPublicPlugAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-library-books': {
+      id: '/api/public/hooks/sync-library-books'
+      path: '/api/public/hooks/sync-library-books'
+      fullPath: '/api/public/hooks/sync-library-books'
+      preLoaderRoute: typeof ApiPublicHooksSyncLibraryBooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-courses': {
+      id: '/api/public/hooks/sync-courses'
+      path: '/api/public/hooks/sync-courses'
+      fullPath: '/api/public/hooks/sync-courses'
+      preLoaderRoute: typeof ApiPublicHooksSyncCoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/run-scheduled-admin': {
+      id: '/api/public/hooks/run-scheduled-admin'
+      path: '/api/public/hooks/run-scheduled-admin'
+      fullPath: '/api/public/hooks/run-scheduled-admin'
+      preLoaderRoute: typeof ApiPublicHooksRunScheduledAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/generate-novel': {
+      id: '/api/public/hooks/generate-novel'
+      path: '/api/public/hooks/generate-novel'
+      fullPath: '/api/public/hooks/generate-novel'
+      preLoaderRoute: typeof ApiPublicHooksGenerateNovelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/generate-book-covers': {
+      id: '/api/public/hooks/generate-book-covers'
+      path: '/api/public/hooks/generate-book-covers'
+      fullPath: '/api/public/hooks/generate-book-covers'
+      preLoaderRoute: typeof ApiPublicHooksGenerateBookCoversRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/cache-book-pdf': {
+      id: '/api/public/hooks/cache-book-pdf'
+      path: '/api/public/hooks/cache-book-pdf'
+      fullPath: '/api/public/hooks/cache-book-pdf'
+      preLoaderRoute: typeof ApiPublicHooksCacheBookPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/auto-ebsu-news': {
+      id: '/api/public/hooks/auto-ebsu-news'
+      path: '/api/public/hooks/auto-ebsu-news'
+      fullPath: '/api/public/hooks/auto-ebsu-news'
+      preLoaderRoute: typeof ApiPublicHooksAutoEbsuNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/admin-ai-pulse': {
+      id: '/api/public/hooks/admin-ai-pulse'
+      path: '/api/public/hooks/admin-ai-pulse'
+      fullPath: '/api/public/hooks/admin-ai-pulse'
+      preLoaderRoute: typeof ApiPublicHooksAdminAiPulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface GamesRouteChildren {
+  GamesEightballRoute: typeof GamesEightballRoute
+  GamesFreegamesRoute: typeof GamesFreegamesRoute
+  GamesPuzzleRoute: typeof GamesPuzzleRoute
+  GamesRiddleRoute: typeof GamesRiddleRoute
+}
+
+const GamesRouteChildren: GamesRouteChildren = {
+  GamesEightballRoute: GamesEightballRoute,
+  GamesFreegamesRoute: GamesFreegamesRoute,
+  GamesPuzzleRoute: GamesPuzzleRoute,
+  GamesRiddleRoute: GamesRiddleRoute,
+}
+
+const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
+
+interface MarketRouteChildren {
+  MarketIdRoute: typeof MarketIdRoute
+  MarketNewRoute: typeof MarketNewRoute
+  MarketIndexRoute: typeof MarketIndexRoute
+}
+
+const MarketRouteChildren: MarketRouteChildren = {
+  MarketIdRoute: MarketIdRoute,
+  MarketNewRoute: MarketNewRoute,
+  MarketIndexRoute: MarketIndexRoute,
+}
+
+const MarketRouteWithChildren =
+  MarketRoute._addFileChildren(MarketRouteChildren)
+
+interface TicketsRouteChildren {
+  TicketsIdRoute: typeof TicketsIdRoute
+}
+
+const TicketsRouteChildren: TicketsRouteChildren = {
+  TicketsIdRoute: TicketsIdRoute,
+}
+
+const TicketsRouteWithChildren =
+  TicketsRoute._addFileChildren(TicketsRouteChildren)
+
+interface ToolsRouteChildren {
+  ToolsAudioConvertRoute: typeof ToolsAudioConvertRoute
+  ToolsCalculatorRoute: typeof ToolsCalculatorRoute
+  ToolsDictionaryRoute: typeof ToolsDictionaryRoute
+  ToolsNotifCleanRoute: typeof ToolsNotifCleanRoute
+  ToolsOcrRoute: typeof ToolsOcrRoute
+  ToolsPdfRoute: typeof ToolsPdfRoute
+  ToolsPlanetsRoute: typeof ToolsPlanetsRoute
+  ToolsQrRoute: typeof ToolsQrRoute
+  ToolsVnum1Route: typeof ToolsVnum1Route
+  ToolsVnum2Route: typeof ToolsVnum2Route
+  ToolsVnum3Route: typeof ToolsVnum3Route
+  ToolsVocalSplitRoute: typeof ToolsVocalSplitRoute
+  ToolsVoiceCloneRoute: typeof ToolsVoiceCloneRoute
+  ToolsYoutubeRoute: typeof ToolsYoutubeRoute
+  ToolsAiSlugRoute: typeof ToolsAiSlugRoute
+}
+
+const ToolsRouteChildren: ToolsRouteChildren = {
+  ToolsAudioConvertRoute: ToolsAudioConvertRoute,
+  ToolsCalculatorRoute: ToolsCalculatorRoute,
+  ToolsDictionaryRoute: ToolsDictionaryRoute,
+  ToolsNotifCleanRoute: ToolsNotifCleanRoute,
+  ToolsOcrRoute: ToolsOcrRoute,
+  ToolsPdfRoute: ToolsPdfRoute,
+  ToolsPlanetsRoute: ToolsPlanetsRoute,
+  ToolsQrRoute: ToolsQrRoute,
+  ToolsVnum1Route: ToolsVnum1Route,
+  ToolsVnum2Route: ToolsVnum2Route,
+  ToolsVnum3Route: ToolsVnum3Route,
+  ToolsVocalSplitRoute: ToolsVocalSplitRoute,
+  ToolsVoiceCloneRoute: ToolsVoiceCloneRoute,
+  ToolsYoutubeRoute: ToolsYoutubeRoute,
+  ToolsAiSlugRoute: ToolsAiSlugRoute,
+}
+
+const ToolsRouteWithChildren = ToolsRoute._addFileChildren(ToolsRouteChildren)
+
+interface BooksComposerRouteChildren {
+  BooksComposerBookIdRoute: typeof BooksComposerBookIdRoute
+  BooksComposerIndexRoute: typeof BooksComposerIndexRoute
+}
+
+const BooksComposerRouteChildren: BooksComposerRouteChildren = {
+  BooksComposerBookIdRoute: BooksComposerBookIdRoute,
+  BooksComposerIndexRoute: BooksComposerIndexRoute,
+}
+
+const BooksComposerRouteWithChildren = BooksComposerRoute._addFileChildren(
+  BooksComposerRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AdminRoute: AdminRoute,
+  ApplyBadgeRoute: ApplyBadgeRoute,
+  BooksRoute: BooksRoute,
+  BookshelfRoute: BookshelfRoute,
+  ChatRoute: ChatRoute,
+  ContactRoute: ContactRoute,
+  FacultiesRoute: FacultiesRoute,
+  GamesRoute: GamesRouteWithChildren,
+  GetCreditsRoute: GetCreditsRoute,
+  LoginRoute: LoginRoute,
+  MarketRoute: MarketRouteWithChildren,
+  MeRoute: MeRoute,
+  NewsRoute: NewsRoute,
+  PrivacyRoute: PrivacyRoute,
+  RedeemRoute: RedeemRoute,
+  SavedRoute: SavedRoute,
+  SearchRoute: SearchRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
+  TicketsRoute: TicketsRouteWithChildren,
+  ToolsRoute: ToolsRouteWithChildren,
+  ApiBootprintRoute: ApiBootprintRoute,
+  ApiDictionaryRoute: ApiDictionaryRoute,
+  ApiEightballRoute: ApiEightballRoute,
+  ApiFreegamesRoute: ApiFreegamesRoute,
+  ApiNewsRoute: ApiNewsRoute,
+  ApiRiddleRoute: ApiRiddleRoute,
+  ApiYoutubeRoute: ApiYoutubeRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BooksComposerRoute: BooksComposerRouteWithChildren,
+  CourseIdRoute: CourseIdRoute,
+  CoursesIdRoute: CoursesIdRoute,
+  DepartmentIdRoute: DepartmentIdRoute,
+  FacultyIdRoute: FacultyIdRoute,
+  GuidesEbsuFeesRoute: GuidesEbsuFeesRoute,
+  NewsSlugRoute: NewsSlugRoute,
+  NotesIdRoute: NotesIdRoute,
+  PostIdRoute: PostIdRoute,
+  PostNewRoute: PostNewRoute,
+  ProfileIdRoute: ProfileIdRoute,
+  BlogIndexRoute: BlogIndexRoute,
+  CoursesIndexRoute: CoursesIndexRoute,
+  NotesIndexRoute: NotesIndexRoute,
+  ApiPublicPlugAiRoute: ApiPublicPlugAiRoute,
+  ApiPublicVirtualNumberRoute: ApiPublicVirtualNumberRoute,
+  ApiPublicVocalSplitRoute: ApiPublicVocalSplitRoute,
+  ApiPublicVocalSplitV2Route: ApiPublicVocalSplitV2Route,
+  ApiPublicVoiceCloneRoute: ApiPublicVoiceCloneRoute,
+  BooksReadIdRoute: BooksReadIdRoute,
+  ApiPublicHooksAdminAiPulseRoute: ApiPublicHooksAdminAiPulseRoute,
+  ApiPublicHooksAutoEbsuNewsRoute: ApiPublicHooksAutoEbsuNewsRoute,
+  ApiPublicHooksCacheBookPdfRoute: ApiPublicHooksCacheBookPdfRoute,
+  ApiPublicHooksGenerateBookCoversRoute: ApiPublicHooksGenerateBookCoversRoute,
+  ApiPublicHooksGenerateNovelRoute: ApiPublicHooksGenerateNovelRoute,
+  ApiPublicHooksRunScheduledAdminRoute: ApiPublicHooksRunScheduledAdminRoute,
+  ApiPublicHooksSyncCoursesRoute: ApiPublicHooksSyncCoursesRoute,
+  ApiPublicHooksSyncLibraryBooksRoute: ApiPublicHooksSyncLibraryBooksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

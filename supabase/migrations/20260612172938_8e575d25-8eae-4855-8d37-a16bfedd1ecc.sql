@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS grant_seed_admin_role ON public.profiles;

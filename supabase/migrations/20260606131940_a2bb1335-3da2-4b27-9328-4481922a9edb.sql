@@ -1,0 +1,1 @@
+ALTER TABLE public.banner_slides ALTER COLUMN image_url DROP NOT NULL;
