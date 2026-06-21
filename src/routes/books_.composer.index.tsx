@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { useIsAdmin } from "@/lib/admin-ids";
 
 export const Route = createFileRoute("/books_/composer/")({ component: ComposerListPage });
 
@@ -38,6 +39,13 @@ function ComposerListPage() {
     queryKey: ["auth-user"],
     queryFn: async () => (await supabase.auth.getUser()).data.user,
   });
+  const isAdmin = useIsAdmin(me?.id);
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-star-badge", me?.id],
+    enabled: !!me?.id,
+    queryFn: async () => (await supabase.from("profiles").select("is_star").eq("id", me!.id).maybeSingle()).data,
+  });
+  const canCompose = isAdmin || !!myProfile?.is_star;
 
   const { data: books, isLoading } = useQuery({
     queryKey: ["my-user-books", me?.id],
@@ -57,6 +65,7 @@ function ComposerListPage() {
     mutationFn: async (book_type: string) => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Sign in to start writing");
+      if (!canCompose) throw new Error("You need the Star badge to compose books. Apply for it from the special-badge form.");
       const { data, error } = await supabase
         .from("user_books")
         .insert({ author_id: u.user.id, book_type, title: "Untitled" })
