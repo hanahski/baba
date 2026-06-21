@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useIsAdmin } from "@/lib/admin-ids";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ const BUCKET = "post-media"; // existing public bucket
 
 function NewListing() {
   const { user, loading } = useAuth();
+  const isAdmin = useIsAdmin(user?.id);
   const nav = useNavigate();
   useEffect(() => {
     if (!loading && !user) {
@@ -49,7 +51,7 @@ function NewListing() {
   const [kind, setKind] = useState<Kind | null>(initial);
 
   if (!kind) return <KindPicker onPick={setKind} />;
-  return <ComposerForm kind={kind} onBack={() => setKind(null)} userId={user?.id} />;
+  return <ComposerForm kind={kind} onBack={() => setKind(null)} userId={user?.id} isAdmin={isAdmin} />;
 }
 
 function KindPicker({ onPick }: { onPick: (k: Kind) => void }) {
