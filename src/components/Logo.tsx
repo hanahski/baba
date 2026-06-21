@@ -1,15 +1,15 @@
-import ebsuCrest from "@/assets/ebsu-crest.jpeg";
+import brandLogo from "@/assets/brand-logo.png";
 
-// App logo — uses the official EBSU crest for a strong, recognisable identity.
+// App brand logo — plug + book spark mark in indigo/amber.
 export function Logo({ size = 32 }: { size?: number }) {
   return (
     <span
-      className="inline-flex items-center justify-center rounded-xl overflow-hidden bg-white ring-1 ring-primary/20 shrink-0"
+      className="inline-flex items-center justify-center rounded-xl overflow-hidden shrink-0"
       style={{ width: size, height: size }}
-      aria-label="StudentsPlug · EBSU"
+      aria-label="StudentsPlug"
     >
       <img
-        src={ebsuCrest}
+        src={brandLogo}
         alt=""
         width={size}
         height={size}
