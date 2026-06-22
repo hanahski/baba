@@ -171,7 +171,7 @@ export function HeroCarousel() {
                     {Inner}
                   </a>
                 ) : (
-                  <Link to={s.cta.to} className={wrapperClass} onClick={stopDragClick}>
+                  <Link to={s.cta.to as any} className={wrapperClass} onClick={stopDragClick}>
                     {Inner}
                   </Link>
                 )
