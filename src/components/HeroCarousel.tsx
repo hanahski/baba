@@ -151,15 +151,15 @@ export function HeroCarousel() {
                   decoding="async"
                   draggable={false}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/10" />
               </>
             )}
-            <div className="relative z-10 max-w-2xl p-6 md:p-10 h-full flex flex-col justify-end">
-              <span className="inline-flex items-center gap-1 text-xs font-bold bg-white/15 px-3 py-1 rounded-full backdrop-blur w-fit">
+            <div className="relative z-10 max-w-2xl p-5 md:p-10 h-full flex flex-col justify-end">
+              <span className="inline-flex items-center gap-1 text-[11px] md:text-xs font-bold bg-white/15 px-3 py-1 rounded-full backdrop-blur w-fit">
                 {s.icon}{s.badge}
               </span>
-              <h2 className="mt-3 text-2xl md:text-5xl font-bold leading-tight font-display drop-shadow-lg">{s.title}</h2>
-              {s.body && <p className="mt-2 text-sm md:text-lg opacity-95 drop-shadow line-clamp-2">{s.body}</p>}
+              <h2 className="mt-3 text-xl sm:text-2xl md:text-5xl font-bold leading-tight font-display drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{s.title}</h2>
+              {s.body && <p className="mt-2 text-sm md:text-lg opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] line-clamp-3">{s.body}</p>}
               {s.cta && (
                 <Button asChild size="lg" variant="secondary" className="mt-4 w-fit">
                   {s.cta.to.startsWith("http") ? (
