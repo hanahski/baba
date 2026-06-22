@@ -281,6 +281,10 @@ button[class*="bg-hero"]:not(:disabled):active {
   animation: route-loader-pulse 0.8s ease-in-out infinite;
 }
 
+/* Inside the Android wrapper, the native splash + progress already show — hide web overlays. */
+html.in-app .route-loader-bar,
+html.in-app .route-loader-dot { display: none !important; }
+
 .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 

@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth";
 import { AuthStatusBanner } from "@/components/AuthStatusBanner";
 import { Toaster } from "@/components/ui/sonner";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { AppBridgeMount } from "@/components/AppBridgeMount";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -134,6 +135,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     return (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <AppBridgeMount />
           <AuthStatusBanner />
           <RouteLoadingIndicator />
           <NetworkStatus />
