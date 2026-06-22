@@ -1,0 +1,1 @@
+ALTER TABLE public.banner_slides ADD COLUMN IF NOT EXISTS cta_label text;
