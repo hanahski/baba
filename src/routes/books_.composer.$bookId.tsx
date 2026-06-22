@@ -220,10 +220,17 @@ function ComposerEditorPage() {
       toast.error(error.message);
       return;
     }
-    const { data } = supabase.storage.from("book-covers").getPublicUrl(path);
+    // Private bucket — sign the URL so readers can actually see the cover.
+    const { data: signed, error: se } = await supabase.storage
+      .from("book-covers")
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (se || !signed?.signedUrl) {
+      toast.error(se?.message ?? "Could not get cover URL");
+      return;
+    }
     const { error: ue } = await supabase
       .from("user_books")
-      .update({ cover_url: data.publicUrl })
+      .update({ cover_url: signed.signedUrl })
       .eq("id", bookId);
     if (ue) {
       toast.error(ue.message);

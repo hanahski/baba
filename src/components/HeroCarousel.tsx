@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
+
 import { Sparkles, Crown, Upload, GamepadIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveBannerUrls } from "@/lib/banner-url";
@@ -77,7 +78,7 @@ export function HeroCarousel() {
     badge: "Featured",
     title: b.title,
     body: b.subtitle ?? "",
-    cta: b.link_url ? { label: "Open", to: b.link_url } : undefined,
+    cta: b.link_url ? { label: b.cta_label?.trim() || "Open", to: b.link_url } : undefined,
     icon: <Sparkles className="w-3 h-3" />,
     gradient: "bg-gradient-to-br from-slate-900 via-slate-800 to-black",
     imageUrl: b.image_url,
@@ -127,43 +128,60 @@ export function HeroCarousel() {
         className="flex h-full transition-transform duration-500 ease-out"
         style={{ transform: `translateX(calc(${-i * 100}% + ${drag}px))`, transitionDuration: drag ? "0ms" : "500ms" }}
       >
-        {slides.map((s, idx) => (
-          <div key={idx} className={`shrink-0 w-full h-full ${s.imageUrl ? "bg-black" : s.gradient} text-white relative overflow-hidden`}>
-            {s.imageUrl && (
-              <>
-                {/* Sharp, full image — fills the frame, no blur */}
-                <img
-                  src={s.imageUrl}
-                  alt={s.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  loading="eager"
-                  fetchPriority={idx === 0 ? "high" : "auto"}
-                  decoding="async"
-                  draggable={false}
-                />
-                {/* Soft bottom-only scrim so the headline stays readable without darkening the whole image */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              </>
-            )}
-            <div className="relative z-10 max-w-2xl p-5 md:p-10 h-full flex flex-col justify-end">
+        {slides.map((s, idx) => {
+          const isExternal = s.cta?.to ? /^https?:\/\//i.test(s.cta.to) : false;
+          const wrapperClass = `absolute inset-0 z-10 block ${s.cta ? "cursor-pointer" : ""}`;
+          const stopDragClick = (e: React.MouseEvent) => {
+            // Suppress click that follows a swipe (>10px drag).
+            if (Math.abs(dx.current) > 10) { e.preventDefault(); e.stopPropagation(); }
+          };
+          const Inner = (
+            <div className="relative z-10 max-w-2xl p-5 md:p-10 h-full flex flex-col justify-end pointer-events-none">
               <span className="inline-flex items-center gap-1 text-[11px] md:text-xs font-bold bg-white/15 px-3 py-1 rounded-full backdrop-blur w-fit">
                 {s.icon}{s.badge}
               </span>
               <h2 className="mt-3 text-xl sm:text-2xl md:text-5xl font-bold leading-tight font-display drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{s.title}</h2>
               {s.body && <p className="mt-2 text-sm md:text-lg opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] line-clamp-3">{s.body}</p>}
               {s.cta && (
-                <Button asChild size="lg" variant="secondary" className="mt-4 w-fit">
-                  {s.cta.to.startsWith("http") ? (
-                    <a href={s.cta.to} target="_blank" rel="noreferrer">{s.cta.label}</a>
-                  ) : (
-                    <a href={s.cta.to}>{s.cta.label}</a>
-                  )}
-                </Button>
+                <span className="mt-4 w-fit inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 h-11 px-8 text-base font-medium">
+                  {s.cta.label}
+                </span>
               )}
             </div>
-            {!s.imageUrl && <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />}
-          </div>
-        ))}
+          );
+          return (
+            <div key={idx} className={`shrink-0 w-full h-full ${s.imageUrl ? "bg-black" : s.gradient} text-white relative overflow-hidden`}>
+              {s.imageUrl && (
+                <>
+                  <img
+                    src={s.imageUrl}
+                    alt={s.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="eager"
+                    fetchPriority={idx === 0 ? "high" : "auto"}
+                    decoding="async"
+                    draggable={false}
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                </>
+              )}
+              {s.cta ? (
+                isExternal ? (
+                  <a href={s.cta.to} target="_blank" rel="noreferrer" className={wrapperClass} onClick={stopDragClick}>
+                    {Inner}
+                  </a>
+                ) : (
+                  <Link to={s.cta.to as any} className={wrapperClass} onClick={stopDragClick}>
+                    {Inner}
+                  </Link>
+                )
+              ) : (
+                Inner
+              )}
+              {!s.imageUrl && <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />}
+            </div>
+          );
+        })}
       </div>
 
       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">

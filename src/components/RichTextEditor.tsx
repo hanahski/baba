@@ -55,8 +55,16 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 420 }
       toast.error(error.message);
       return;
     }
-    const { data } = supabase.storage.from("book-covers").getPublicUrl(path);
-    exec("insertImage", data.publicUrl);
+    // book-covers is a private bucket — use a long-lived signed URL so the
+    // inline image actually loads for readers.
+    const { data: signed, error: se } = await supabase.storage
+      .from("book-covers")
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (se || !signed?.signedUrl) {
+      toast.error(se?.message ?? "Could not get image URL");
+      return;
+    }
+    exec("insertImage", signed.signedUrl);
   };
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
