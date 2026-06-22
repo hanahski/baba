@@ -47,27 +47,36 @@ function LoginPage() {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { data: { display_name: name || email.split("@")[0] }, emailRedirectTo: window.location.origin },
+          options: { data: { display_name: name || email.split("@")[0] } },
         });
         if (error) throw error;
         if (!data.session) {
-          toast.success("Account created. Check your email to confirm it, then sign in.", { duration: 8000 });
-          setMode("signin");
+          toast.success("Account created. Check your email for a 6-digit code.", { duration: 6000 });
+          await nav({ to: "/verify-otp", search: { email, redirect } });
           return;
         }
         toast.success("Welcome to StudentsPlug!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
+          // Email-not-confirmed → send them to OTP entry instead of failing
+          const msg = String(error.message || "").toLowerCase();
+          if (msg.includes("confirm") || msg.includes("not confirmed")) {
+            await supabase.auth.resend({ type: "signup", email }).catch(() => {});
+            toast.message("Check your email for a 6-digit code to finish verifying.");
+            await nav({ to: "/verify-otp", search: { email, redirect } });
+            return;
+          }
           if (isSeedAdminEmail(email) && isInvalidLoginError(error)) {
             const { data: created, error: createErr } = await supabase.auth.signUp({
               email,
               password,
-              options: { data: { display_name: "Admin" }, emailRedirectTo: window.location.origin },
+              options: { data: { display_name: "Admin" } },
             });
             if (createErr) throw createErr;
             if (!created.session) {
-              toast.success("Admin account created for this remix. Confirm the email, then sign in again.", { duration: 9000 });
+              toast.success("Admin account created. Enter the 6-digit code from your email.", { duration: 7000 });
+              await nav({ to: "/verify-otp", search: { email, redirect } });
               return;
             }
             await claimSeedAdminRole().catch((claimErr) => console.error("[login] admin claim failed", claimErr));
@@ -78,6 +87,7 @@ function LoginPage() {
         } else if (isSeedAdminEmail(email)) {
           await claimSeedAdminRole().catch((claimErr) => console.error("[login] admin claim failed", claimErr));
         }
+
         // Hard gate: blocked / deactivated accounts cannot sign in.
         const { data: userRes } = await supabase.auth.getUser();
         const uid = userRes.user?.id;

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -94,6 +95,11 @@ import { Route as ApiPublicHooksCacheBookPdfRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksAutoEbsuNewsRouteImport } from './routes/api/public/hooks/auto-ebsu-news'
 import { Route as ApiPublicHooksAdminAiPulseRouteImport } from './routes/api/public/hooks/admin-ai-pulse'
 
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
@@ -547,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tools': typeof ToolsRouteWithChildren
+  '/verify-otp': typeof VerifyOtpRoute
   '/api/bootprint': typeof ApiBootprintRoute
   '/api/dictionary': typeof ApiDictionaryRoute
   '/api/eightball': typeof ApiEightballRoute
@@ -632,6 +639,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tools': typeof ToolsRouteWithChildren
+  '/verify-otp': typeof VerifyOtpRoute
   '/api/bootprint': typeof ApiBootprintRoute
   '/api/dictionary': typeof ApiDictionaryRoute
   '/api/eightball': typeof ApiEightballRoute
@@ -718,6 +726,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tools': typeof ToolsRouteWithChildren
+  '/verify-otp': typeof VerifyOtpRoute
   '/api/bootprint': typeof ApiBootprintRoute
   '/api/dictionary': typeof ApiDictionaryRoute
   '/api/eightball': typeof ApiEightballRoute
@@ -806,6 +815,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tickets'
     | '/tools'
+    | '/verify-otp'
     | '/api/bootprint'
     | '/api/dictionary'
     | '/api/eightball'
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tickets'
     | '/tools'
+    | '/verify-otp'
     | '/api/bootprint'
     | '/api/dictionary'
     | '/api/eightball'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tickets'
     | '/tools'
+    | '/verify-otp'
     | '/api/bootprint'
     | '/api/dictionary'
     | '/api/eightball'
@@ -1063,6 +1075,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TicketsRoute: typeof TicketsRouteWithChildren
   ToolsRoute: typeof ToolsRouteWithChildren
+  VerifyOtpRoute: typeof VerifyOtpRoute
   ApiBootprintRoute: typeof ApiBootprintRoute
   ApiDictionaryRoute: typeof ApiDictionaryRoute
   ApiEightballRoute: typeof ApiEightballRoute
@@ -1103,6 +1116,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -1812,6 +1832,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TicketsRoute: TicketsRouteWithChildren,
   ToolsRoute: ToolsRouteWithChildren,
+  VerifyOtpRoute: VerifyOtpRoute,
   ApiBootprintRoute: ApiBootprintRoute,
   ApiDictionaryRoute: ApiDictionaryRoute,
   ApiEightballRoute: ApiEightballRoute,
@@ -1852,13 +1873,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
