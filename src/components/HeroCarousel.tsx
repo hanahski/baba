@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+
 import { Sparkles, Crown, Upload, GamepadIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveBannerUrls } from "@/lib/banner-url";
