@@ -1,6 +1,6 @@
-import brandLogo from "@/assets/brand-logo.png";
+import brandLogo from "@/assets/brand-logo.svg.asset.json";
 
-// App brand logo — plug + book spark mark in indigo/amber.
+// App brand logo — StudentsPlug mark.
 export function Logo({ size = 32 }: { size?: number }) {
   return (
     <span
@@ -9,11 +9,11 @@ export function Logo({ size = 32 }: { size?: number }) {
       aria-label="StudentsPlug"
     >
       <img
-        src={brandLogo}
+        src={brandLogo.url}
         alt=""
         width={size}
         height={size}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-cover"
       />
     </span>
   );
