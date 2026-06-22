@@ -60,8 +60,8 @@ input, select, textarea { font-size: 16px; } /* iOS won't zoom inputs >=16px */
   --secondary-foreground: oklch(0.32 0.04 260);
   --muted: oklch(0.93 0.01 250);
   --muted-foreground: oklch(0.50 0.03 255);
-  --accent: oklch(0.92 0.03 280);
-  --accent-foreground: oklch(0.32 0.05 280);
+  --accent: oklch(0.86 0.14 88);
+  --accent-foreground: oklch(0.32 0.08 80);
   --destructive: oklch(0.62 0.20 27);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.65 0.16 155);
@@ -83,7 +83,7 @@ input, select, textarea { font-size: 16px; } /* iOS won't zoom inputs >=16px */
   --rank-pro: oklch(0.62 0.22 295);
   --rank-sure-plug: oklch(0.65 0.25 25);
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.58 0.16 265), oklch(0.65 0.18 295));
+  --gradient-hero: linear-gradient(135deg, oklch(0.58 0.16 265), oklch(0.78 0.16 85));
   --gradient-rank: linear-gradient(135deg, var(--rank-pro), var(--rank-sure-plug));
 
   /* Soft extruded card (default), pressed/inset, hover-lifted, ring glow */
@@ -112,8 +112,8 @@ input, select, textarea { font-size: 16px; } /* iOS won't zoom inputs >=16px */
   --secondary-foreground: oklch(0.94 0.01 250);
   --muted: oklch(0.26 0.025 260);
   --muted-foreground: oklch(0.70 0.02 255);
-  --accent: oklch(0.30 0.06 295);
-  --accent-foreground: oklch(0.94 0.01 250);
+  --accent: oklch(0.55 0.14 80);
+  --accent-foreground: oklch(0.98 0.02 90);
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.70 0.16 155);
