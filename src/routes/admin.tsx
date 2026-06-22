@@ -429,6 +429,28 @@ function AdminListings() {
   );
 }
 
+type LinkKind = "internal" | "external" | "profile" | "post" | "book" | "course" | "ticket" | "none";
+
+const LINK_KIND_OPTIONS: { value: LinkKind; label: string; hint: string; placeholder: string; prefix?: string }[] = [
+  { value: "none", label: "No link", hint: "Banner won't be clickable", placeholder: "" },
+  { value: "internal", label: "Page on this site", hint: "Any path on Students Plug (e.g. /games or /tools)", placeholder: "/tools" },
+  { value: "external", label: "External website", hint: "Full URL starting with https://", placeholder: "https://example.com" },
+  { value: "profile", label: "User profile", hint: "Paste a user ID — links to their profile", placeholder: "uuid…", prefix: "/profile/" },
+  { value: "post", label: "Post", hint: "Post ID — links to the post page", placeholder: "post-id", prefix: "/post/" },
+  { value: "book", label: "Book / Novel / Comic", hint: "Library book ID", placeholder: "book-id", prefix: "/books/read/" },
+  { value: "course", label: "Course", hint: "Course ID", placeholder: "course-id", prefix: "/course/" },
+  { value: "ticket", label: "Event ticket", hint: "Ticket ID", placeholder: "ticket-id", prefix: "/tickets/" },
+];
+
+function buildLinkUrl(kind: LinkKind, value: string): string {
+  const v = value.trim();
+  if (!v || kind === "none") return "";
+  if (kind === "internal") return v.startsWith("/") || /^https?:\/\//i.test(v) ? v : `/${v}`;
+  if (kind === "external") return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  const opt = LINK_KIND_OPTIONS.find((o) => o.value === kind);
+  return opt?.prefix ? `${opt.prefix}${v}` : v;
+}
+
 function AdminBanners() {
   const { data, refetch } = useQuery({
     queryKey: ["admin-banners"],
@@ -441,7 +463,9 @@ function AdminBanners() {
   const [subtitle, setSubtitle] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imagePath, setImagePath] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
+  const [linkKind, setLinkKind] = useState<LinkKind>("none");
+  const [linkValue, setLinkValue] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [previewRatio, setPreviewRatio] = useState<number | null>(null);
 
@@ -456,7 +480,6 @@ function AdminBanners() {
       const { data: signed } = await supabase.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365);
       setImagePath(path);
       setImageUrl(signed?.signedUrl ?? "");
-      // measure aspect for preview
       const im = new Image();
       im.onload = () => setPreviewRatio(im.width / im.height);
       if (signed?.signedUrl) im.src = signed.signedUrl;
@@ -466,14 +489,27 @@ function AdminBanners() {
     } finally { setUploading(false); }
   };
 
+  const finalLinkUrl = buildLinkUrl(linkKind, linkValue);
+  const linkOpt = LINK_KIND_OPTIONS.find((o) => o.value === linkKind)!;
 
   const add = async () => {
     if (!title || !imageUrl) return toast.error("Title and image required");
-    // Store the storage path for uploads (signed on read); fall back to a pasted URL.
     const stored = imagePath || imageUrl;
-    const { error } = await supabase.from("banner_slides").insert({ title, subtitle, image_url: stored, link_url: linkUrl || null });
+    const { error } = await supabase.from("banner_slides").insert({
+      title,
+      subtitle,
+      image_url: stored,
+      link_url: finalLinkUrl || null,
+      cta_label: ctaLabel.trim() || null,
+    } as any);
     if (error) toast.error(error.message);
-    else { toast.success("Banner added"); setTitle(""); setSubtitle(""); setImageUrl(""); setImagePath(""); setLinkUrl(""); setPreviewRatio(null); refetch(); }
+    else {
+      toast.success("Banner added");
+      setTitle(""); setSubtitle(""); setImageUrl(""); setImagePath("");
+      setLinkKind("none"); setLinkValue(""); setCtaLabel("");
+      setPreviewRatio(null);
+      refetch();
+    }
   };
   const toggle = async (id: string, is_active: boolean) => {
     await supabase.from("banner_slides").update({ is_active: !is_active }).eq("id", id);
@@ -516,7 +552,39 @@ function AdminBanners() {
           </div>
         )}
 
-        <Input placeholder="Link URL (optional)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+        <div className="space-y-2 pt-2 border-t">
+          <label className="block text-sm font-medium">Where should tapping this banner take people?</label>
+          <select
+            value={linkKind}
+            onChange={(e) => { setLinkKind(e.target.value as LinkKind); setLinkValue(""); }}
+            className="w-full h-10 px-3 rounded-md border bg-background text-sm"
+          >
+            {LINK_KIND_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-muted-foreground">{linkOpt.hint}</p>
+          {linkKind !== "none" && (
+            <>
+              <Input
+                placeholder={linkOpt.placeholder}
+                value={linkValue}
+                onChange={(e) => setLinkValue(e.target.value)}
+              />
+              {finalLinkUrl && (
+                <p className="text-[11px] text-muted-foreground break-all">
+                  Final URL: <span className="font-mono">{finalLinkUrl}</span>
+                </p>
+              )}
+              <Input
+                placeholder='Button label (e.g. "Read more", "Open")'
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+              />
+            </>
+          )}
+        </div>
+
         <Button onClick={add} disabled={uploading || !title || !imageUrl}>Add banner</Button>
       </div>
 
@@ -526,7 +594,12 @@ function AdminBanners() {
             <img src={b.image_url} alt={b.title} className="w-16 h-16 object-cover rounded-xl" />
             <div className="flex-1 min-w-0">
               <p className="font-medium line-clamp-1">{b.title}</p>
-              <p className="text-xs text-muted-foreground line-clamp-1">{b.subtitle ?? b.link_url}</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">{b.subtitle ?? ""}</p>
+              {b.link_url && (
+                <p className="text-[11px] text-primary line-clamp-1 break-all">
+                  → {b.cta_label ? `[${b.cta_label}] ` : ""}{b.link_url}
+                </p>
+              )}
             </div>
             <Button size="sm" variant="outline" onClick={() => toggle(b.id, b.is_active)}>{b.is_active ? "Hide" : "Show"}</Button>
             <Button size="sm" variant="destructive" onClick={() => del(b.id)}><Trash2 className="w-4 h-4" /></Button>
