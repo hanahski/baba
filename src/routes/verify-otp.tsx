@@ -13,12 +13,14 @@ export const Route = createFileRoute("/verify-otp")({
   validateSearch: (s: Record<string, unknown>) => ({
     email: (s.email as string | undefined) ?? "",
     redirect: (s.redirect as string | undefined) ?? "/",
+    mode: ((s.mode as string | undefined) === "recovery" ? "recovery" : "signup") as "recovery" | "signup",
   }),
   component: VerifyOtpPage,
 });
 
 function VerifyOtpPage() {
-  const { email: emailParam, redirect } = Route.useSearch();
+  const { email: emailParam, redirect, mode } = Route.useSearch();
+  const isRecovery = mode === "recovery";
   const nav = useNavigate();
   const [email, setEmail] = useState(emailParam);
   const [code, setCode] = useState("");
@@ -36,8 +38,17 @@ function VerifyOtpPage() {
     if (token.length !== 6) return;
     setBusy(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: "email" });
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token,
+        type: isRecovery ? "recovery" : "email",
+      });
       if (error) throw error;
+      if (isRecovery) {
+        toast.success("Code verified — set your new password");
+        await nav({ to: "/reset-password" });
+        return;
+      }
       if (SEED_ADMIN_EMAILS.has(email.trim().toLowerCase())) {
         await claimSeedAdminRole().catch((e) => console.error("[verify-otp] admin claim", e));
       }
@@ -55,8 +66,13 @@ function VerifyOtpPage() {
     if (!email) return toast.error("Enter your email first");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
-      if (error) throw error;
+      if (isRecovery) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+        if (error) throw error;
+      }
       toast.success("New code sent. Check your inbox.");
       setResendIn(45);
     } catch (err: any) {
@@ -79,10 +95,15 @@ function VerifyOtpPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-background via-accent/30 to-background">
       <div className="w-full max-w-md bg-card border rounded-3xl shadow-card p-6 md:p-8">
         <Link to="/" className="font-bold text-xl text-gradient font-display">StudentsPlug</Link>
-        <h1 className="mt-4 text-2xl font-bold">Verify your email</h1>
+        <h1 className="mt-4 text-2xl font-bold">{isRecovery ? "Reset your password" : "Verify your email"}</h1>
         <p className="text-sm text-muted-foreground">
-          We sent a 6-digit code to <span className="font-medium text-foreground">{email || "your email"}</span>. Enter it below to activate your account.
+          We sent a 6-digit code to <span className="font-medium text-foreground">{email || "your email"}</span>.
+          {isRecovery ? " Enter it below to choose a new password." : " Enter it below to activate your account."}
         </p>
+
+        <Button type="button" variant="secondary" className="w-full mt-4" disabled={busy || resendIn > 0} onClick={resend}>
+          {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+        </Button>
 
         {!emailParam && (
           <div className="mt-4">

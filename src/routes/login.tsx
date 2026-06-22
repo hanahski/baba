@@ -196,7 +196,34 @@ function LoginPage() {
             <div><Label htmlFor="name">Display name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" /></div>
           )}
           <div><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div><Label htmlFor="pw">Password</Label><Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="pw">Password</Label>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline font-medium"
+                  onClick={async () => {
+                    if (!email) return toast.error("Enter your email first");
+                    setBusy(true);
+                    try {
+                      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+                      if (error) throw error;
+                      toast.success("Code sent. Check your inbox.");
+                      await nav({ to: "/verify-otp", search: { email, redirect, mode: "recovery" } });
+                    } catch (err: any) {
+                      toast.error(err.message);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}</Button>
         </form>
 
