@@ -1,4 +1,4 @@
-import brandLogoAsset from "@/assets/brand-logo.svg.asset.json";
+import brandLogoAsset from "@/assets/brand-logo.png.asset.json";
 const brandLogo = brandLogoAsset.url;
 
 /**

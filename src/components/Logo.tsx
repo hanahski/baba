@@ -1,4 +1,4 @@
-import brandLogo from "@/assets/brand-logo.svg.asset.json";
+import brandLogo from "@/assets/brand-logo.png.asset.json";
 
 // App brand logo — StudentsPlug mark.
 export function Logo({ size = 32 }: { size?: number }) {
