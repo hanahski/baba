@@ -78,7 +78,7 @@ export function HeroCarousel() {
     badge: "Featured",
     title: b.title,
     body: b.subtitle ?? "",
-    cta: b.link_url ? { label: "Open", to: b.link_url } : undefined,
+    cta: b.link_url ? { label: b.cta_label?.trim() || "Open", to: b.link_url } : undefined,
     icon: <Sparkles className="w-3 h-3" />,
     gradient: "bg-gradient-to-br from-slate-900 via-slate-800 to-black",
     imageUrl: b.image_url,
