@@ -485,6 +485,14 @@ function MePage() {
             <Button onClick={save}>Save changes</Button>
             <Button variant="outline" onClick={() => { signOut(); nav({ to: "/" }); }}><LogOut className="w-4 h-4 mr-1" />Sign out</Button>
           </div>
+
+          <div className="pt-6 mt-2 border-t space-y-3">
+            <div>
+              <h3 className="font-semibold">Password & security</h3>
+              <p className="text-xs text-muted-foreground">Change your password or recover access if you forgot it.</p>
+            </div>
+            <ChangePasswordBlock email={user?.email ?? ""} />
+          </div>
         </section>
       </div>
       <AvatarLightbox avatarKey={profile.avatar_key} photoUrl={(profile as any).picture_url} open={photoOpen} onClose={() => setPhotoOpen(false)} />
