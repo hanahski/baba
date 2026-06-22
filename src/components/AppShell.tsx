@@ -206,7 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 flex items-center gap-2 sm:gap-3">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg shrink-0">
-            <Logo size={32} />
+            <Logo size={44} />
             <span className="hidden sm:inline text-gradient font-display tracking-tight">StudentsPlug</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1 ml-2 text-sm">
