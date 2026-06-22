@@ -128,30 +128,21 @@ export function HeroCarousel() {
         style={{ transform: `translateX(calc(${-i * 100}% + ${drag}px))`, transitionDuration: drag ? "0ms" : "500ms" }}
       >
         {slides.map((s, idx) => (
-          <div key={idx} className={`shrink-0 w-full h-full ${s.gradient} text-white relative overflow-hidden`}>
+          <div key={idx} className={`shrink-0 w-full h-full ${s.imageUrl ? "bg-black" : s.gradient} text-white relative overflow-hidden`}>
             {s.imageUrl && (
               <>
-                {/* Blurred fill so portrait/odd-ratio images never leave gaps */}
-                <img
-                  src={s.imageUrl}
-                  alt=""
-                  aria-hidden
-                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl"
-                  loading={idx === 0 ? "eager" : "lazy"}
-                  decoding="async"
-                  draggable={false}
-                />
-                {/* Sharp, full image — never cropped or upscaled past its size */}
+                {/* Sharp, full image — fills the frame, no blur */}
                 <img
                   src={s.imageUrl}
                   alt={s.title}
-                  className="absolute inset-0 w-full h-full object-contain"
-                  loading={idx === 0 ? "eager" : "lazy"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="eager"
                   fetchPriority={idx === 0 ? "high" : "auto"}
                   decoding="async"
                   draggable={false}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/10" />
+                {/* Soft bottom-only scrim so the headline stays readable without darkening the whole image */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
               </>
             )}
             <div className="relative z-10 max-w-2xl p-5 md:p-10 h-full flex flex-col justify-end">
