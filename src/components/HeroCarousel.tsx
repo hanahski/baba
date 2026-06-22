@@ -113,7 +113,7 @@ export function HeroCarousel() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-3xl mb-6 select-none touch-pan-y aspect-[16/8] md:aspect-[16/6]"
+      className="relative overflow-hidden rounded-3xl mb-6 select-none touch-pan-y min-h-[320px] aspect-[4/5] sm:aspect-[16/8] sm:min-h-0 md:aspect-[16/6]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => { setPaused(false); onEnd(); }}
       onTouchStart={(e) => onStart(e.touches[0].clientX)}
