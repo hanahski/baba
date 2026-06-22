@@ -500,3 +500,70 @@ function MePage() {
     </AppShell>
   );
 }
+
+function ChangePasswordBlock({ email }: { email: string }) {
+  const nav = useNavigate();
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [logoutEverywhere, setLogoutEverywhere] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const change = async () => {
+    if (pw.length < 6) return toast.error("Password must be at least 6 characters");
+    if (pw !== pw2) return toast.error("Passwords don't match");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pw });
+      if (error) throw error;
+      toast.success("Password updated");
+      if (logoutEverywhere) {
+        await supabase.auth.signOut({ scope: "others" }).catch(() => {});
+        toast.message("Signed out of all other devices");
+      }
+      setPw(""); setPw2("");
+    } catch (err: any) {
+      toast.error(err.message || "Could not update password");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const forgot = async () => {
+    if (!email) return toast.error("No email on this account");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      toast.success("Code sent to your email");
+      await nav({ to: "/verify-otp", search: { email, redirect: "/me", mode: "recovery" } });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl border p-3 bg-accent/10">
+      <div>
+        <Label>New password</Label>
+        <Input type="password" minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="At least 6 characters" />
+      </div>
+      <div>
+        <Label>Confirm new password</Label>
+        <Input type="password" minLength={6} value={pw2} onChange={(e) => setPw2(e.target.value)} />
+      </div>
+      <div className="flex items-start justify-between gap-3 rounded-lg border p-2">
+        <div>
+          <Label className="font-medium text-sm">Log out everywhere else</Label>
+          <p className="text-xs text-muted-foreground">Sign out all other devices.</p>
+        </div>
+        <Switch checked={logoutEverywhere} onCheckedChange={setLogoutEverywhere} />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button onClick={change} disabled={busy}>{busy ? "Saving…" : "Save password"}</Button>
+        <Button variant="outline" onClick={forgot} disabled={busy}>Forgot password</Button>
+      </div>
+    </div>
+  );
+}
