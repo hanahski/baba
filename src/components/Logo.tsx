@@ -4,7 +4,7 @@ import brandLogo from "@/assets/brand-logo.png.asset.json";
 export function Logo({ size = 32 }: { size?: number }) {
   return (
     <span
-      className="inline-flex items-center justify-center rounded-xl overflow-hidden shrink-0"
+      className="inline-flex items-center justify-center shrink-0"
       style={{ width: size, height: size }}
       aria-label="StudentsPlug"
     >
@@ -13,7 +13,7 @@ export function Logo({ size = 32 }: { size?: number }) {
         alt=""
         width={size}
         height={size}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
       />
     </span>
   );
