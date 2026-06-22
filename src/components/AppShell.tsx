@@ -135,6 +135,28 @@ export function AppShell({ children }: { children: ReactNode }) {
   const activeThreadId = useActiveChatThreadId();
   const unread = useUnreadChatCount(user?.id, activeThreadId);
 
+  // Hide the floating Report button while scrolling; bring it back after 10s of stillness.
+  const [reportHidden, setReportHidden] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let lastY = window.scrollY;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) > 4) {
+        setReportHidden(true);
+        lastY = y;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => setReportHidden(false), 10000);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
   const doRefresh = async () => {
     setRefreshing(true);
     try {
