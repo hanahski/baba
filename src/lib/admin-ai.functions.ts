@@ -8,7 +8,20 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type Msg = { role: "user" | "assistant" | "system" | "tool"; content: string; tool_call_id?: string; tool_calls?: any[]; name?: string };
 
-const SYSTEM_PROMPT = `You are Co-Admin — a teammate inside StudentsPlug's admin panel. Not a butler. You and the admin run the site together.
+const SYSTEM_PROMPT = `You are Co-Admin — an elite engineering + writing teammate inside StudentsPlug's admin panel. Pro-level coder, technical writer, composer, and operator. You and the admin run the site together.
+
+PRO CRAFT
+- Code like a senior: idiomatic, complete, runnable. No "TODO", no stubs. Include imports, packages, build hints.
+- Write like a pro: tight prose, real structure, real headings, real examples.
+- When the admin uploads images / PDFs / code / docs, READ them carefully and reference specifics.
+- The admin can attach up to 25 images plus arbitrary documents in one message. Treat every attachment as primary input — don't ask them to re-describe what's clearly in the file.
+
+FILE CREATION
+- Use 'create_text_file' for any text/source file: .java, .kt, .xml, .gradle, .ts, .tsx, .js, .py, .json, .yaml, .html, .css, .md, .txt, .sh, .sql, Dockerfile, etc. Give a clean filename with the right extension.
+- Use 'create_pdf' for polished PDFs (reports, notes, contracts). Provide markdown-flavored body; basic # / ## / lists / paragraphs render.
+- Use 'create_docx' for Word documents.
+- After creating a file, mention the filename briefly. The download link is rendered automatically.
+- If the admin says "make a Java file that does X" — just call create_text_file with filename ending .java and full working code. Don't ask which package name unless truly ambiguous.
 
 VOICE
 - Warm, direct, brief. Use the admin's first name when known.
@@ -119,7 +132,38 @@ const TOOLS = [
   { type: "function", function: { name: "update_ai_tool", description: "Upgrade or edit an existing AI tool. Pass id (or slug) plus any fields to change (title, description, icon, category, config, brief). Use to improve prompts, swap models, fix icons.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" }, title: { type: "string" }, description: { type: "string" }, icon: { type: "string" }, category: { type: "string" }, config: { type: "object" }, brief: { type: "string" } } } } },
   { type: "function", function: { name: "set_ai_tool_status", description: "Approve, reject, or archive an AI tool. approved = visible on /tools.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" }, status: { type: "string", enum: ["proposed","approved","rejected","archived"] } }, required: ["status"] } } },
   { type: "function", function: { name: "delete_ai_tool", description: "Permanently delete an AI tool by id or slug.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" } } } } },
+  { type: "function", function: { name: "create_text_file", description: "Create any text-based file (source code, config, markup) the admin can download. Use for .java, .kt, .xml, .gradle, .ts, .tsx, .js, .py, .json, .yaml, .html, .css, .md, .txt, .sh, .sql, Dockerfile, etc. Write COMPLETE working content — no placeholders.", parameters: { type: "object", properties: { filename: { type: "string", description: "Filename including extension, e.g. MainActivity.kt" }, content: { type: "string", description: "Full file contents." } }, required: ["filename", "content"] } } },
+  { type: "function", function: { name: "create_pdf", description: "Generate a downloadable PDF. Body accepts simple markdown: # H1, ## H2, ### H3, paragraphs, blank lines. Use for reports, notes, briefs, contracts.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string", description: "Markdown-flavored body." } }, required: ["filename", "body"] } } },
+  { type: "function", function: { name: "create_docx", description: "Generate a downloadable Microsoft Word (.docx) document. Body accepts simple markdown.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, required: ["filename", "body"] } } },
 ];
+
+async function uploadGeneratedFile(userId: string, filename: string, bytes: Buffer | Uint8Array, mime: string): Promise<{ url: string; filename: string; size: number; mime: string }> {
+  const safe = filename.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120) || "file";
+  const path = `admin-ai/files/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+  const { error } = await supabaseAdmin.storage.from("banners").upload(path, bytes, { contentType: mime, upsert: false });
+  if (error) throw error;
+  const { data, error: sErr } = await supabaseAdmin.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+  if (sErr) throw sErr;
+  return { url: data.signedUrl, filename: safe, size: bytes.byteLength, mime };
+}
+
+function mimeForFilename(name: string): string {
+  const ext = name.toLowerCase().split(".").pop() || "";
+  const map: Record<string, string> = {
+    java: "text/x-java-source", kt: "text/x-kotlin", kts: "text/x-kotlin",
+    xml: "application/xml", gradle: "text/plain", properties: "text/plain",
+    ts: "text/typescript", tsx: "text/typescript", js: "text/javascript", jsx: "text/javascript",
+    py: "text/x-python", rb: "text/x-ruby", go: "text/x-go", rs: "text/x-rust",
+    c: "text/x-c", cpp: "text/x-c++", h: "text/x-c", hpp: "text/x-c++",
+    cs: "text/x-csharp", swift: "text/x-swift", php: "application/x-httpd-php",
+    json: "application/json", yaml: "text/yaml", yml: "text/yaml", toml: "text/plain",
+    html: "text/html", htm: "text/html", css: "text/css", scss: "text/css",
+    md: "text/markdown", txt: "text/plain", sh: "application/x-sh", bash: "application/x-sh",
+    sql: "application/sql", env: "text/plain", dockerfile: "text/plain",
+    csv: "text/csv", svg: "image/svg+xml",
+  };
+  return map[ext] ?? "text/plain";
+}
 
 async function nameFor(userId: string): Promise<{ id: string; display_name: string | null; email: string | null } | null> {
   const { data } = await supabaseAdmin.from("profiles").select("id,display_name,email").eq("id", userId).maybeSingle();
@@ -456,6 +500,78 @@ export async function executeAdminTool(name: string, args: any, actingUserId: st
       if (error) throw error;
       return { ok: true };
     }
+    case "create_text_file": {
+      const filename = String(args.filename || "file.txt");
+      const content = String(args.content ?? "");
+      const mime = mimeForFilename(filename);
+      const out = await uploadGeneratedFile(actingUserId, filename, Buffer.from(content, "utf8"), mime);
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime };
+    }
+    case "create_pdf": {
+      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+      const pdf = await PDFDocument.create();
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const margin = 50;
+      const pageWidth = 595;
+      const pageHeight = 842;
+      const maxWidth = pageWidth - margin * 2;
+      let page = pdf.addPage([pageWidth, pageHeight]);
+      let y = pageHeight - margin;
+      const wrap = (text: string, f: any, size: number) => {
+        const words = text.split(/\s+/);
+        const lines: string[] = [];
+        let cur = "";
+        for (const w of words) {
+          const trial = cur ? cur + " " + w : w;
+          if (f.widthOfTextAtSize(trial, size) > maxWidth) { if (cur) lines.push(cur); cur = w; }
+          else cur = trial;
+        }
+        if (cur) lines.push(cur);
+        return lines;
+      };
+      const drawLine = (text: string, f: any, size: number, gap = 4) => {
+        if (y - size < margin) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - margin; }
+        page.drawText(text, { x: margin, y: y - size, size, font: f, color: rgb(0.1, 0.1, 0.12) });
+        y -= size + gap;
+      };
+      if (args.title) { for (const ln of wrap(String(args.title), bold, 22)) drawLine(ln, bold, 22, 8); y -= 6; }
+      const body = String(args.body ?? "");
+      for (const raw of body.split(/\n/)) {
+        const line = raw.replace(/\r$/, "");
+        if (!line.trim()) { y -= 8; continue; }
+        let f = font, size = 11, txt = line;
+        if (/^###\s+/.test(line)) { f = bold; size = 13; txt = line.replace(/^###\s+/, ""); }
+        else if (/^##\s+/.test(line)) { f = bold; size = 15; txt = line.replace(/^##\s+/, ""); }
+        else if (/^#\s+/.test(line)) { f = bold; size = 18; txt = line.replace(/^#\s+/, ""); }
+        else if (/^[-*]\s+/.test(line)) { txt = "• " + line.replace(/^[-*]\s+/, ""); }
+        for (const ln of wrap(txt, f, size)) drawLine(ln, f, size, 3);
+      }
+      const bytes = await pdf.save();
+      const filename = String(args.filename || "document.pdf");
+      const out = await uploadGeneratedFile(actingUserId, filename.endsWith(".pdf") ? filename : filename + ".pdf", bytes, "application/pdf");
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime: "application/pdf" };
+    }
+    case "create_docx": {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+      const children: any[] = [];
+      if (args.title) children.push(new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: String(args.title), bold: true })] }));
+      const body = String(args.body ?? "");
+      for (const raw of body.split(/\n/)) {
+        const line = raw.replace(/\r$/, "");
+        if (!line.trim()) { children.push(new Paragraph("")); continue; }
+        if (/^###\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_3, text: line.replace(/^###\s+/, "") }));
+        else if (/^##\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: line.replace(/^##\s+/, "") }));
+        else if (/^#\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, text: line.replace(/^#\s+/, "") }));
+        else if (/^[-*]\s+/.test(line)) children.push(new Paragraph({ text: line.replace(/^[-*]\s+/, ""), bullet: { level: 0 } }));
+        else children.push(new Paragraph({ children: [new TextRun(line)] }));
+      }
+      const doc = new Document({ sections: [{ children }] });
+      const bytes = await Packer.toBuffer(doc);
+      const filename = String(args.filename || "document.docx");
+      const out = await uploadGeneratedFile(actingUserId, filename.endsWith(".docx") ? filename : filename + ".docx", bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime: out.mime };
+    }
     default:
       throw new Error(`unknown tool: ${name}`);
   }
@@ -472,11 +588,14 @@ export async function postAiMessage(adminId: string, content: string, opts: { ki
   });
 }
 
+type Attachment = { url: string; name?: string; mime?: string; kind?: "image" | "file" };
+
 export const adminAiChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { messages: Msg[]; attached_image_url?: string }) => {
+  .inputValidator((d: { messages: Msg[]; attached_image_url?: string; attachments?: Attachment[] }) => {
     if (!d || !Array.isArray(d.messages)) throw new Error("messages required");
     if (d.messages.length > 40) d.messages = d.messages.slice(-40);
+    if (d.attachments && d.attachments.length > 30) throw new Error("max 30 attachments");
     return d;
   })
   .handler(async ({ data, context }) => {
@@ -492,10 +611,35 @@ export const adminAiChat = createServerFn({ method: "POST" })
     const now = new Date();
     let sysCtx = `Current UTC time: ${now.toISOString()} (epoch ms: ${now.getTime()}). You are talking to ${adminName} (user id: ${context.userId}). Scheduler resolution: ~5 seconds.`;
     if (data.attached_image_url) sysCtx += `\n\nattached_image_url: ${data.attached_image_url}\n(The admin attached an image this turn. If they ask to post/add/schedule a banner, USE this URL as image_url.)`;
+
+    // Inject attachments into the LAST user message as multimodal content.
+    const inMsgs: any[] = [...data.messages];
+    const atts = data.attachments ?? [];
+    if (atts.length > 0) {
+      let lastUserIdx = -1;
+      for (let i = inMsgs.length - 1; i >= 0; i--) { if (inMsgs[i].role === "user") { lastUserIdx = i; break; } }
+      if (lastUserIdx >= 0) {
+        const orig = inMsgs[lastUserIdx];
+        const textPart = typeof orig.content === "string" ? orig.content : "";
+        const parts: any[] = [];
+        if (textPart) parts.push({ type: "text", text: textPart });
+        const fileNotes: string[] = [];
+        for (const a of atts) {
+          if (a.kind === "image" || (a.mime ?? "").startsWith("image/")) {
+            parts.push({ type: "image_url", image_url: { url: a.url } });
+          } else {
+            fileNotes.push(`- ${a.name ?? "file"} (${a.mime ?? "unknown"}): ${a.url}`);
+          }
+        }
+        if (fileNotes.length) parts.push({ type: "text", text: `\n\nAttached files (download to inspect):\n${fileNotes.join("\n")}` });
+        inMsgs[lastUserIdx] = { role: "user", content: parts.length === 1 && parts[0].type === "text" ? parts[0].text : parts };
+      }
+    }
+
     let messages: any[] = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: sysCtx },
-      ...data.messages,
+      ...inMsgs,
     ];
 
     const executed: { name: string; args: any; result: any; error?: string }[] = [];
@@ -504,7 +648,7 @@ export const adminAiChat = createServerFn({ method: "POST" })
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, tools: TOOLS, tool_choice: "auto" }),
+        body: JSON.stringify({ model: "google/gemini-2.5-pro", messages, tools: TOOLS, tool_choice: "auto" }),
       });
 
       if (res.status === 429) throw new Error("Admin AI is busy. Try again.");
@@ -558,7 +702,7 @@ export const adminAiUploadImage = createServerFn({ method: "POST" })
     if (!m) throw new Error("invalid data url");
     const mime = m[1];
     const bytes = Buffer.from(m[2], "base64");
-    if (bytes.length > 8 * 1024 * 1024) throw new Error("image too large (max 8MB)");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("image too large (max 25MB)");
     const ext = (mime.split("/")[1] || "png").replace(/[^a-z0-9]/gi, "");
     const path = `admin-ai/${context.userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
@@ -568,4 +712,37 @@ export const adminAiUploadImage = createServerFn({ method: "POST" })
     const { data: signed, error: sErr } = await supabaseAdmin.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
     if (sErr) throw sErr;
     return { ok: true, url: signed.signedUrl, path };
+  });
+
+// Upload any admin-AI-attached file (image OR document) up to 25MB.
+// Returns a signed URL the chat can pass into adminAiChat as an attachment.
+export const adminAiUploadFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { data_url: string; filename?: string; mime?: string }) => {
+    if (!d?.data_url?.startsWith("data:")) throw new Error("data_url required");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: role } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!role) throw new Error("admin only");
+    const m = data.data_url.match(/^data:([^;]+);base64,(.*)$/);
+    if (!m) throw new Error("invalid data url");
+    const mime = data.mime || m[1] || "application/octet-stream";
+    const bytes = Buffer.from(m[2], "base64");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("file too large (max 25MB)");
+    const baseName = (data.filename || "file").replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
+    const path = `admin-ai/uploads/${context.userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${baseName}`;
+    const { error: upErr } = await supabaseAdmin.storage.from("banners").upload(path, bytes, { contentType: mime, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed, error: sErr } = await supabaseAdmin.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    if (sErr) throw sErr;
+    return {
+      ok: true,
+      url: signed.signedUrl,
+      path,
+      filename: baseName,
+      mime,
+      size: bytes.byteLength,
+      kind: mime.startsWith("image/") ? "image" as const : "file" as const,
+    };
   });
