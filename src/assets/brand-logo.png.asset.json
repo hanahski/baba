@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "24cd1069-dc5b-46c5-a949-9479bb5b4243",
-  "project_id": "2a5dce88-2d66-4d76-8af0-2245e68c0c5c",
-  "url": "/__l5e/assets-v1/24cd1069-dc5b-46c5-a949-9479bb5b4243/brand-logo.png",
-  "r2_key": "a/v1/2a5dce88-2d66-4d76-8af0-2245e68c0c5c/24cd1069-dc5b-46c5-a949-9479bb5b4243/brand-logo.png",
-  "original_filename": "brand-logo.png",
-  "size": 71627,
   "content_type": "image/png",
-  "created_at": "2026-06-22T21:57:34Z"
+  "created_at": "2026-06-22T21:57:34Z",
+  "original_filename": "brand-logo.png",
+  "project_id": "614a00e4-d389-4ac1-b58c-6516d440ecc7",
+  "r2_key": "a/v1/614a00e4-d389-4ac1-b58c-6516d440ecc7/24cd1069-dc5b-46c5-a949-9479bb5b4243/brand-logo.png",
+  "size": 71627,
+  "url": "/__l5e/assets-v1/24cd1069-dc5b-46c5-a949-9479bb5b4243/brand-logo.png",
+  "version": 1
 }
