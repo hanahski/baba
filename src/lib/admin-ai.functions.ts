@@ -702,7 +702,7 @@ export const adminAiUploadImage = createServerFn({ method: "POST" })
     if (!m) throw new Error("invalid data url");
     const mime = m[1];
     const bytes = Buffer.from(m[2], "base64");
-    if (bytes.length > 8 * 1024 * 1024) throw new Error("image too large (max 8MB)");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("image too large (max 25MB)");
     const ext = (mime.split("/")[1] || "png").replace(/[^a-z0-9]/gi, "");
     const path = `admin-ai/${context.userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
