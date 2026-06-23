@@ -37,12 +37,19 @@ type AndroidBridge = {
   theme?: () => string;
   setTheme?: (theme: "light" | "dark") => void;
   saveFile?: (name: string, mime: string, base64: string) => boolean;
+  /** Launches the native Google account picker. Result arrives via
+   *  window.StudentsPlugApp.onGoogleIdToken / onGoogleSignInError. */
+  googleSignIn?: () => void;
+  /** Clears the cached native Google credential so the next sign-in re-prompts. */
+  googleSignOut?: () => void;
 };
 
 declare global {
   interface Window {
     StudentsPlugApp?: {
       receiveFiles: (json: string) => void;
+      onGoogleIdToken?: (token: string) => void;
+      onGoogleSignInError?: (message: string) => void;
     };
     AndroidApp?: AndroidBridge;
     __sharedFilesQueue?: File[];
