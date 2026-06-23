@@ -127,6 +127,29 @@ function LoginPage() {
       time: new Date().toISOString(),
     };
     console.log("[GoogleSignIn] start", ctx);
+
+    // In the Android wrapper, route through the native account picker and
+    // exchange the resulting Google ID token for a Supabase session. This
+    // completely avoids the web OAuth popup inside the app.
+    if (supportsNativeGoogle()) {
+      try {
+        const idToken = await requestNativeGoogleSignIn();
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token: idToken,
+        });
+        if (error) throw error;
+        toast.success("Signed in");
+        await nav({ to: redirect });
+      } catch (err: any) {
+        console.error("[GoogleSignIn] native failed", err);
+        toast.error(`Google sign-in failed: ${err?.message || String(err)}`);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${redirect}`,
