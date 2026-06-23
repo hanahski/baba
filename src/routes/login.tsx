@@ -199,7 +199,7 @@ function LoginPage() {
           Continue with Google
         </Button>
 
-        {inIframe && (
+        {inIframe && !isInApp() && (
           <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
             Google sign-in is blocked inside the preview frame. {" "}
             <button
