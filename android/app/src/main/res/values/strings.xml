@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">StudentsPlug</string>
+    <string name="default_web_client_id">887115940176-vc5bq202789b6u34tbu2pne7cjmbls8s.apps.googleusercontent.com</string>
     <string name="offline_title">You\'re offline</string>
     <string name="offline_message">Showing cached pages. We\'ll reconnect automatically.</string>
     <string name="notif_channel_default">StudentsPlug</string>

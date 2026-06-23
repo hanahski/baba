@@ -41,6 +41,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+
 /**
  * MainActivity — native shell around the StudentsPlug web app.
  *
@@ -60,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String SITE_URL =
             "https://id-preview--f7f3628f-c144-4220-afce-d13bde6a6250.lovable.app";
 
+    private static final int RC_GOOGLE_SIGN_IN = 9001;
+
     private WebView webView;
     private SwipeRefreshLayout swipe;
     private View loader;
@@ -68,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> filePathCallback;
     private ActivityResultLauncher<Intent> filePicker;
     private ActivityResultLauncher<String> notifPermission;
+    private GoogleSignInClient googleSignInClient;
 
     private ConnectivityManager.NetworkCallback networkCallback;
     private volatile boolean online = true;
@@ -268,6 +278,65 @@ public class MainActivity extends AppCompatActivity {
                 notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
+    }
+
+    // ===========================================================================================
+    // Google Sign-In
+    // ===========================================================================================
+    void startGoogleSignIn() {
+        if (googleSignInClient == null) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build();
+            googleSignInClient = GoogleSignIn.getClient(this, gso);
+        }
+        Intent signInIntent = googleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_GOOGLE_SIGN_IN);
+    }
+
+    void googleSignOut() {
+        if (googleSignInClient == null) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build();
+            googleSignInClient = GoogleSignIn.getClient(this, gso);
+        }
+        googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            // Silently clear cached credential so next sign-in re-prompts.
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_GOOGLE_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                String idToken = account != null ? account.getIdToken() : null;
+                if (idToken != null && !idToken.isEmpty()) {
+                    callJs("window.StudentsPlugApp.onGoogleIdToken && window.StudentsPlugApp.onGoogleIdToken('" + escapeJsString(idToken) + "')");
+                } else {
+                    callJs("window.StudentsPlugApp.onGoogleSignInError && window.StudentsPlugApp.onGoogleSignInError('No ID token returned')");
+                }
+            } catch (ApiException e) {
+                String msg = e.getStatusCode() == 12501 ? "Sign-in cancelled" : "Google sign-in error: " + e.getStatusCode();
+                callJs("window.StudentsPlugApp.onGoogleSignInError && window.StudentsPlugApp.onGoogleSignInError('" + escapeJsString(msg) + "')");
+            }
+        }
+    }
+
+    private void callJs(String script) {
+        if (webView != null) {
+            runOnUiThread(() -> webView.evaluateJavascript(script, null));
+        }
+    }
+
+    private String escapeJsString(String raw) {
+        if (raw == null) return "";
+        return raw.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "");
     }
 
     // ===========================================================================================
