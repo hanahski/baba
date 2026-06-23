@@ -713,3 +713,36 @@ export const adminAiUploadImage = createServerFn({ method: "POST" })
     if (sErr) throw sErr;
     return { ok: true, url: signed.signedUrl, path };
   });
+
+// Upload any admin-AI-attached file (image OR document) up to 25MB.
+// Returns a signed URL the chat can pass into adminAiChat as an attachment.
+export const adminAiUploadFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { data_url: string; filename?: string; mime?: string }) => {
+    if (!d?.data_url?.startsWith("data:")) throw new Error("data_url required");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: role } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!role) throw new Error("admin only");
+    const m = data.data_url.match(/^data:([^;]+);base64,(.*)$/);
+    if (!m) throw new Error("invalid data url");
+    const mime = data.mime || m[1] || "application/octet-stream";
+    const bytes = Buffer.from(m[2], "base64");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("file too large (max 25MB)");
+    const baseName = (data.filename || "file").replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
+    const path = `admin-ai/uploads/${context.userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${baseName}`;
+    const { error: upErr } = await supabaseAdmin.storage.from("banners").upload(path, bytes, { contentType: mime, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed, error: sErr } = await supabaseAdmin.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    if (sErr) throw sErr;
+    return {
+      ok: true,
+      url: signed.signedUrl,
+      path,
+      filename: baseName,
+      mime,
+      size: bytes.byteLength,
+      kind: mime.startsWith("image/") ? "image" as const : "file" as const,
+    };
+  });
