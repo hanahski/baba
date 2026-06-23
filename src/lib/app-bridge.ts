@@ -1,25 +1,42 @@
 /**
  * StudentsPlug app ↔ website bridge.
  *
- * When running inside the Android wrapper (UA contains "StudentsPlugApp"),
- * the native side calls `window.StudentsPlugApp.receiveFiles(json)` with files
- * the user shared into the app via Android's share sheet. We re-emit them as a
- * DOM CustomEvent so any page can opt-in:
+ * Detect the wrapper:
+ *   isInApp() — true when running inside the Android WebView (UA contains
+ *   "StudentsPlugApp"). Use it to enable app-only behavior on the site.
  *
- *     window.addEventListener("studentsplug:shared-files", (e) => {
- *       const files: File[] = (e as CustomEvent).detail.files;
- *       // ...feed into your <input type="file"> or upload code
- *     });
+ * Android → website (files shared INTO the app):
+ *   The native side calls window.StudentsPlugApp.receiveFiles(json). We
+ *   re-emit them as a "studentsplug:shared-files" CustomEvent. Files that
+ *   arrive before any listener is attached are queued on
+ *   window.__sharedFilesQueue and flushed on first subscribe.
  *
- * Files arriving before any listener registered are queued on
- * `window.__sharedFilesQueue` and re-dispatched on the first listener attach.
+ *     onSharedFiles((files) => upload(files));
+ *
+ * Website → Android (download a file to the device):
+ *   saveFileToDevice(file) writes the file into the phone's Downloads via
+ *   the AndroidApp.saveFile bridge. Returns false outside the app so the
+ *   caller can fall back to a normal <a download> in regular browsers.
+ *
+ * Theme sync:
+ *   pushThemeToNative(theme) tells the wrapper which mode the site is in so
+ *   the native root + splash background match (white in light mode, black
+ *   in dark mode) — including the very next cold start.
  */
 
 export type SharedFilePayload = {
   name: string;
   type: string;
-  /** data URL: data:<mime>;base64,<...> */
+  /** data URL: data:<mime>;base64,<...>. The native side always sends this. */
   dataUrl: string;
+};
+
+type AndroidBridge = {
+  platform: () => string;
+  appVersion: () => string;
+  theme?: () => string;
+  setTheme?: (theme: "light" | "dark") => void;
+  saveFile?: (name: string, mime: string, base64: string) => boolean;
 };
 
 declare global {
@@ -27,6 +44,7 @@ declare global {
     StudentsPlugApp?: {
       receiveFiles: (json: string) => void;
     };
+    AndroidApp?: AndroidBridge;
     __sharedFilesQueue?: File[];
   }
 }
@@ -45,7 +63,7 @@ function dataUrlToFile(p: SharedFilePayload): File {
 
 export function installAppBridge() {
   if (typeof window === "undefined") return;
-  if (window.StudentsPlugApp) return; // already installed
+  if (window.StudentsPlugApp) return;
 
   window.__sharedFilesQueue = window.__sharedFilesQueue ?? [];
 
@@ -56,7 +74,7 @@ export function installAppBridge() {
         const files = payloads.map(dataUrlToFile);
         window.__sharedFilesQueue!.push(...files);
         window.dispatchEvent(
-          new CustomEvent("studentsplug:shared-files", { detail: { files } })
+          new CustomEvent("studentsplug:shared-files", { detail: { files } }),
         );
       } catch (err) {
         console.error("[app-bridge] receiveFiles failed", err);
@@ -70,11 +88,52 @@ export function onSharedFiles(cb: (files: File[]) => void) {
   if (typeof window === "undefined") return () => {};
   const handler = (e: Event) => cb((e as CustomEvent).detail.files as File[]);
   window.addEventListener("studentsplug:shared-files", handler);
-  // flush queue
   const queued = window.__sharedFilesQueue ?? [];
   if (queued.length) {
     window.__sharedFilesQueue = [];
     cb(queued);
   }
   return () => window.removeEventListener("studentsplug:shared-files", handler);
+}
+
+/** Tell the Android wrapper which theme the site is using right now. */
+export function pushThemeToNative(theme: "light" | "dark") {
+  try {
+    window.AndroidApp?.setTheme?.(theme);
+  } catch {
+    /* not in app */
+  }
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const result = String(r.result || "");
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Save a file to the phone's Downloads folder via the Android bridge.
+ * Returns true on success, false if not running inside the app (callers
+ * should fall back to a normal browser download in that case).
+ */
+export async function saveFileToDevice(
+  file: Blob,
+  filename: string,
+  mime?: string,
+): Promise<boolean> {
+  if (!isInApp() || !window.AndroidApp?.saveFile) return false;
+  try {
+    const base64 = await blobToBase64(file);
+    return Boolean(window.AndroidApp.saveFile(filename, mime ?? file.type ?? "application/octet-stream", base64));
+  } catch (err) {
+    console.error("[app-bridge] saveFileToDevice failed", err);
+    return false;
+  }
 }
