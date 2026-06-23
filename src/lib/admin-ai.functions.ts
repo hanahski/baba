@@ -588,11 +588,14 @@ export async function postAiMessage(adminId: string, content: string, opts: { ki
   });
 }
 
+type Attachment = { url: string; name?: string; mime?: string; kind?: "image" | "file" };
+
 export const adminAiChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { messages: Msg[]; attached_image_url?: string }) => {
+  .inputValidator((d: { messages: Msg[]; attached_image_url?: string; attachments?: Attachment[] }) => {
     if (!d || !Array.isArray(d.messages)) throw new Error("messages required");
     if (d.messages.length > 40) d.messages = d.messages.slice(-40);
+    if (d.attachments && d.attachments.length > 30) throw new Error("max 30 attachments");
     return d;
   })
   .handler(async ({ data, context }) => {
@@ -608,10 +611,35 @@ export const adminAiChat = createServerFn({ method: "POST" })
     const now = new Date();
     let sysCtx = `Current UTC time: ${now.toISOString()} (epoch ms: ${now.getTime()}). You are talking to ${adminName} (user id: ${context.userId}). Scheduler resolution: ~5 seconds.`;
     if (data.attached_image_url) sysCtx += `\n\nattached_image_url: ${data.attached_image_url}\n(The admin attached an image this turn. If they ask to post/add/schedule a banner, USE this URL as image_url.)`;
+
+    // Inject attachments into the LAST user message as multimodal content.
+    const inMsgs: any[] = [...data.messages];
+    const atts = data.attachments ?? [];
+    if (atts.length > 0) {
+      let lastUserIdx = -1;
+      for (let i = inMsgs.length - 1; i >= 0; i--) { if (inMsgs[i].role === "user") { lastUserIdx = i; break; } }
+      if (lastUserIdx >= 0) {
+        const orig = inMsgs[lastUserIdx];
+        const textPart = typeof orig.content === "string" ? orig.content : "";
+        const parts: any[] = [];
+        if (textPart) parts.push({ type: "text", text: textPart });
+        const fileNotes: string[] = [];
+        for (const a of atts) {
+          if (a.kind === "image" || (a.mime ?? "").startsWith("image/")) {
+            parts.push({ type: "image_url", image_url: { url: a.url } });
+          } else {
+            fileNotes.push(`- ${a.name ?? "file"} (${a.mime ?? "unknown"}): ${a.url}`);
+          }
+        }
+        if (fileNotes.length) parts.push({ type: "text", text: `\n\nAttached files (download to inspect):\n${fileNotes.join("\n")}` });
+        inMsgs[lastUserIdx] = { role: "user", content: parts.length === 1 && parts[0].type === "text" ? parts[0].text : parts };
+      }
+    }
+
     let messages: any[] = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: sysCtx },
-      ...data.messages,
+      ...inMsgs,
     ];
 
     const executed: { name: string; args: any; result: any; error?: string }[] = [];
@@ -620,7 +648,7 @@ export const adminAiChat = createServerFn({ method: "POST" })
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, tools: TOOLS, tool_choice: "auto" }),
+        body: JSON.stringify({ model: "google/gemini-2.5-pro", messages, tools: TOOLS, tool_choice: "auto" }),
       });
 
       if (res.status === 429) throw new Error("Admin AI is busy. Try again.");
