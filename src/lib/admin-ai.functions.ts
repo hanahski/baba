@@ -132,7 +132,38 @@ const TOOLS = [
   { type: "function", function: { name: "update_ai_tool", description: "Upgrade or edit an existing AI tool. Pass id (or slug) plus any fields to change (title, description, icon, category, config, brief). Use to improve prompts, swap models, fix icons.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" }, title: { type: "string" }, description: { type: "string" }, icon: { type: "string" }, category: { type: "string" }, config: { type: "object" }, brief: { type: "string" } } } } },
   { type: "function", function: { name: "set_ai_tool_status", description: "Approve, reject, or archive an AI tool. approved = visible on /tools.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" }, status: { type: "string", enum: ["proposed","approved","rejected","archived"] } }, required: ["status"] } } },
   { type: "function", function: { name: "delete_ai_tool", description: "Permanently delete an AI tool by id or slug.", parameters: { type: "object", properties: { id: { type: "string" }, slug: { type: "string" } } } } },
+  { type: "function", function: { name: "create_text_file", description: "Create any text-based file (source code, config, markup) the admin can download. Use for .java, .kt, .xml, .gradle, .ts, .tsx, .js, .py, .json, .yaml, .html, .css, .md, .txt, .sh, .sql, Dockerfile, etc. Write COMPLETE working content — no placeholders.", parameters: { type: "object", properties: { filename: { type: "string", description: "Filename including extension, e.g. MainActivity.kt" }, content: { type: "string", description: "Full file contents." } }, required: ["filename", "content"] } } },
+  { type: "function", function: { name: "create_pdf", description: "Generate a downloadable PDF. Body accepts simple markdown: # H1, ## H2, ### H3, paragraphs, blank lines. Use for reports, notes, briefs, contracts.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string", description: "Markdown-flavored body." } }, required: ["filename", "body"] } } },
+  { type: "function", function: { name: "create_docx", description: "Generate a downloadable Microsoft Word (.docx) document. Body accepts simple markdown.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, required: ["filename", "body"] } } },
 ];
+
+async function uploadGeneratedFile(userId: string, filename: string, bytes: Buffer | Uint8Array, mime: string): Promise<{ url: string; filename: string; size: number; mime: string }> {
+  const safe = filename.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120) || "file";
+  const path = `admin-ai/files/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+  const { error } = await supabaseAdmin.storage.from("banners").upload(path, bytes, { contentType: mime, upsert: false });
+  if (error) throw error;
+  const { data, error: sErr } = await supabaseAdmin.storage.from("banners").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+  if (sErr) throw sErr;
+  return { url: data.signedUrl, filename: safe, size: bytes.byteLength, mime };
+}
+
+function mimeForFilename(name: string): string {
+  const ext = name.toLowerCase().split(".").pop() || "";
+  const map: Record<string, string> = {
+    java: "text/x-java-source", kt: "text/x-kotlin", kts: "text/x-kotlin",
+    xml: "application/xml", gradle: "text/plain", properties: "text/plain",
+    ts: "text/typescript", tsx: "text/typescript", js: "text/javascript", jsx: "text/javascript",
+    py: "text/x-python", rb: "text/x-ruby", go: "text/x-go", rs: "text/x-rust",
+    c: "text/x-c", cpp: "text/x-c++", h: "text/x-c", hpp: "text/x-c++",
+    cs: "text/x-csharp", swift: "text/x-swift", php: "application/x-httpd-php",
+    json: "application/json", yaml: "text/yaml", yml: "text/yaml", toml: "text/plain",
+    html: "text/html", htm: "text/html", css: "text/css", scss: "text/css",
+    md: "text/markdown", txt: "text/plain", sh: "application/x-sh", bash: "application/x-sh",
+    sql: "application/sql", env: "text/plain", dockerfile: "text/plain",
+    csv: "text/csv", svg: "image/svg+xml",
+  };
+  return map[ext] ?? "text/plain";
+}
 
 async function nameFor(userId: string): Promise<{ id: string; display_name: string | null; email: string | null } | null> {
   const { data } = await supabaseAdmin.from("profiles").select("id,display_name,email").eq("id", userId).maybeSingle();
