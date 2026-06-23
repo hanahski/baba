@@ -44,4 +44,10 @@ public class WebAppBridge {
 
     @JavascriptInterface
     public void openExternal(String url) { activity.openExternal(url); }
+
+    @JavascriptInterface
+    public void googleSignIn() { activity.startGoogleSignIn(); }
+
+    @JavascriptInterface
+    public void googleSignOut() { activity.googleSignOut(); }
 }
