@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { isInApp, supportsNativeGoogle, requestNativeGoogleSignIn } from "@/lib/app-bridge";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +128,29 @@ function LoginPage() {
       time: new Date().toISOString(),
     };
     console.log("[GoogleSignIn] start", ctx);
+
+    // In the Android wrapper, route through the native account picker and
+    // exchange the resulting Google ID token for a Supabase session. This
+    // completely avoids the web OAuth popup inside the app.
+    if (supportsNativeGoogle()) {
+      try {
+        const idToken = await requestNativeGoogleSignIn();
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token: idToken,
+        });
+        if (error) throw error;
+        toast.success("Signed in");
+        await nav({ to: redirect });
+      } catch (err: any) {
+        console.error("[GoogleSignIn] native failed", err);
+        toast.error(`Google sign-in failed: ${err?.message || String(err)}`);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${redirect}`,
@@ -175,7 +199,7 @@ function LoginPage() {
           Continue with Google
         </Button>
 
-        {inIframe && (
+        {inIframe && !isInApp() && (
           <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
             Google sign-in is blocked inside the preview frame. {" "}
             <button

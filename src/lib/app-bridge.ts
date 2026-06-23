@@ -37,12 +37,19 @@ type AndroidBridge = {
   theme?: () => string;
   setTheme?: (theme: "light" | "dark") => void;
   saveFile?: (name: string, mime: string, base64: string) => boolean;
+  /** Launches the native Google account picker. Result arrives via
+   *  window.StudentsPlugApp.onGoogleIdToken / onGoogleSignInError. */
+  googleSignIn?: () => void;
+  /** Clears the cached native Google credential so the next sign-in re-prompts. */
+  googleSignOut?: () => void;
 };
 
 declare global {
   interface Window {
     StudentsPlugApp?: {
       receiveFiles: (json: string) => void;
+      onGoogleIdToken?: (token: string) => void;
+      onGoogleSignInError?: (message: string) => void;
     };
     AndroidApp?: AndroidBridge;
     __sharedFilesQueue?: File[];
@@ -135,5 +142,74 @@ export async function saveFileToDevice(
   } catch (err) {
     console.error("[app-bridge] saveFileToDevice failed", err);
     return false;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Native Google Sign-In bridge                                              */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/** True when the wrapper exposes the native Google Sign-In bridge. */
+export function supportsNativeGoogle(): boolean {
+  return isInApp() && typeof window !== "undefined" && typeof window.AndroidApp?.googleSignIn === "function";
+}
+
+/**
+ * Ask the Android wrapper to show the native Google account picker.
+ * Resolves with the Google ID token (a JWT) that can be handed to
+ * `supabase.auth.signInWithIdToken({ provider: "google", token })`.
+ */
+export function requestNativeGoogleSignIn(timeoutMs = 120_000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!supportsNativeGoogle()) {
+      reject(new Error("Native Google Sign-In is not available"));
+      return;
+    }
+
+    const bridge = (window.StudentsPlugApp ??= { receiveFiles: () => {} });
+    let done = false;
+    const cleanup = () => {
+      bridge.onGoogleIdToken = undefined;
+      bridge.onGoogleSignInError = undefined;
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error("Google sign-in timed out"));
+    }, timeoutMs);
+
+    bridge.onGoogleIdToken = (token: string) => {
+      if (done) return;
+      done = true;
+      cleanup();
+      if (!token) reject(new Error("Empty Google ID token"));
+      else resolve(token);
+    };
+    bridge.onGoogleSignInError = (message: string) => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error(message || "Google sign-in cancelled"));
+    };
+
+    try {
+      window.AndroidApp!.googleSignIn!();
+    } catch (err) {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(err instanceof Error ? err : new Error(String(err)));
+    }
+  });
+}
+
+/** Optional: clear the native cached Google account so next sign-in re-prompts. */
+export function nativeGoogleSignOut() {
+  try {
+    window.AndroidApp?.googleSignOut?.();
+  } catch {
+    /* not in app */
   }
 }
