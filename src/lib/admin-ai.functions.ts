@@ -500,6 +500,78 @@ export async function executeAdminTool(name: string, args: any, actingUserId: st
       if (error) throw error;
       return { ok: true };
     }
+    case "create_text_file": {
+      const filename = String(args.filename || "file.txt");
+      const content = String(args.content ?? "");
+      const mime = mimeForFilename(filename);
+      const out = await uploadGeneratedFile(actingUserId, filename, Buffer.from(content, "utf8"), mime);
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime };
+    }
+    case "create_pdf": {
+      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+      const pdf = await PDFDocument.create();
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const margin = 50;
+      const pageWidth = 595;
+      const pageHeight = 842;
+      const maxWidth = pageWidth - margin * 2;
+      let page = pdf.addPage([pageWidth, pageHeight]);
+      let y = pageHeight - margin;
+      const wrap = (text: string, f: any, size: number) => {
+        const words = text.split(/\s+/);
+        const lines: string[] = [];
+        let cur = "";
+        for (const w of words) {
+          const trial = cur ? cur + " " + w : w;
+          if (f.widthOfTextAtSize(trial, size) > maxWidth) { if (cur) lines.push(cur); cur = w; }
+          else cur = trial;
+        }
+        if (cur) lines.push(cur);
+        return lines;
+      };
+      const drawLine = (text: string, f: any, size: number, gap = 4) => {
+        if (y - size < margin) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - margin; }
+        page.drawText(text, { x: margin, y: y - size, size, font: f, color: rgb(0.1, 0.1, 0.12) });
+        y -= size + gap;
+      };
+      if (args.title) { for (const ln of wrap(String(args.title), bold, 22)) drawLine(ln, bold, 22, 8); y -= 6; }
+      const body = String(args.body ?? "");
+      for (const raw of body.split(/\n/)) {
+        const line = raw.replace(/\r$/, "");
+        if (!line.trim()) { y -= 8; continue; }
+        let f = font, size = 11, txt = line;
+        if (/^###\s+/.test(line)) { f = bold; size = 13; txt = line.replace(/^###\s+/, ""); }
+        else if (/^##\s+/.test(line)) { f = bold; size = 15; txt = line.replace(/^##\s+/, ""); }
+        else if (/^#\s+/.test(line)) { f = bold; size = 18; txt = line.replace(/^#\s+/, ""); }
+        else if (/^[-*]\s+/.test(line)) { txt = "• " + line.replace(/^[-*]\s+/, ""); }
+        for (const ln of wrap(txt, f, size)) drawLine(ln, f, size, 3);
+      }
+      const bytes = await pdf.save();
+      const filename = String(args.filename || "document.pdf");
+      const out = await uploadGeneratedFile(actingUserId, filename.endsWith(".pdf") ? filename : filename + ".pdf", bytes, "application/pdf");
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime: "application/pdf" };
+    }
+    case "create_docx": {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+      const children: any[] = [];
+      if (args.title) children.push(new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: String(args.title), bold: true })] }));
+      const body = String(args.body ?? "");
+      for (const raw of body.split(/\n/)) {
+        const line = raw.replace(/\r$/, "");
+        if (!line.trim()) { children.push(new Paragraph("")); continue; }
+        if (/^###\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_3, text: line.replace(/^###\s+/, "") }));
+        else if (/^##\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: line.replace(/^##\s+/, "") }));
+        else if (/^#\s+/.test(line)) children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, text: line.replace(/^#\s+/, "") }));
+        else if (/^[-*]\s+/.test(line)) children.push(new Paragraph({ text: line.replace(/^[-*]\s+/, ""), bullet: { level: 0 } }));
+        else children.push(new Paragraph({ children: [new TextRun(line)] }));
+      }
+      const doc = new Document({ sections: [{ children }] });
+      const bytes = await Packer.toBuffer(doc);
+      const filename = String(args.filename || "document.docx");
+      const out = await uploadGeneratedFile(actingUserId, filename.endsWith(".docx") ? filename : filename + ".docx", bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime: out.mime };
+    }
     default:
       throw new Error(`unknown tool: ${name}`);
   }
