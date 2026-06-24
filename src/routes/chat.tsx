@@ -1144,11 +1144,11 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!arr.length) return;
     if (remainingImgSlots <= 0) {
-      toast.error("You've hit the 25-image limit for this chat");
+      toast.error("Only 1 image at a time — remove the current one to attach another");
       return;
     }
     const slice = arr.slice(0, remainingImgSlots);
-    if (arr.length > remainingImgSlots) toast.info(`Only added ${slice.length} (25 max per chat)`);
+    if (arr.length > 1) toast.info("Plug AI accepts 1 image per message");
     try {
       const urls = await Promise.all(slice.map(fileToDataUrlAi));
       setPendingImages((p) => [...p, ...urls]);
