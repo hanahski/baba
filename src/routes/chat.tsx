@@ -263,15 +263,24 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
     },
   });
 
+  const [notifOn, setNotifOn] = useState<boolean>(() => dmNotifEnabled());
+  useEffect(() => { setDmNotifEnabled(notifOn); }, [notifOn]);
+  const notifOnRef = useRef(notifOn);
+  useEffect(() => { notifOnRef.current = notifOn; }, [notifOn]);
+
   useEffect(() => {
     const ch = supabase
       .channel(`dm-threads-${meId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, () =>
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, (payload) => {
+        qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
+        const row: any = payload.new;
+        if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
+          try { playNewMessageTone(); } catch {}
+        }
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
@@ -289,7 +298,18 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
       <aside className={`${activeThread ? "hidden md:block" : "block"} bg-card border rounded-2xl overflow-hidden md:flex md:flex-col relative`}>
         <div className="p-3 border-b flex items-center justify-between gap-2">
           <h2 className="font-semibold text-sm">Conversations</h2>
-          <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setNotifOn((v) => !v)}
+              title={notifOn ? "Mute message sounds" : "Unmute message sounds"}
+              aria-label={notifOn ? "Mute message sounds" : "Unmute message sounds"}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+            >
+              {notifOn ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4 text-destructive" />}
+            </button>
+            <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <button
