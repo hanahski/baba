@@ -6,11 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { playAdminAiReplyChime } from "@/lib/sounds";
 import {
   Terminal, Send, Loader2, Trash2, CheckCircle2, XCircle, Radio,
   Image as ImageIcon, Paperclip, X, FileText, FileCode2, Download, Cpu,
+  Bell, BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
+
+const NOTIF_PREF_KEY = "admin-ai-notif-on";
 
 type Attachment = { url: string; name: string; mime: string; kind: "image" | "file"; size: number };
 
