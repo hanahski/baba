@@ -5,6 +5,7 @@ import { AuthStatusBanner } from "@/components/AuthStatusBanner";
 import { Toaster } from "@/components/ui/sonner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AppBridgeMount } from "@/components/AppBridgeMount";
+import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -138,6 +139,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           <AppBridgeMount />
           <AuthStatusBanner />
           <RouteLoadingIndicator />
+          <RouteTransitionLoader />
           <NetworkStatus />
           <Outlet />
           <Toaster richColors position="top-center" />
