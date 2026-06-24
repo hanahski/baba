@@ -22,6 +22,11 @@ function isInvalidLoginError(error: unknown) {
     .includes("invalid login credentials");
 }
 
+function getSafeRedirect(value?: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/~oauth")) return "/";
+  return value;
+}
+
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string | undefined) ?? undefined }),
   component: LoginPage,
@@ -29,7 +34,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { redirect: redirectParam } = Route.useSearch();
-  const redirect = redirectParam || "/";
+  const redirect = getSafeRedirect(redirectParam);
   const nav = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -153,7 +158,7 @@ function LoginPage() {
 
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}${redirect}`,
+        redirect_uri: window.location.origin,
         extraParams: { prompt: "select_account" },
       });
       console.log("[GoogleSignIn] result", {
@@ -172,7 +177,7 @@ function LoginPage() {
         return;
       }
       if (result.redirected) return;
-      nav({ to: redirect });
+      await nav({ to: redirect });
     } catch (err: any) {
       console.error("[GoogleSignIn] threw", {
         name: err?.name,
