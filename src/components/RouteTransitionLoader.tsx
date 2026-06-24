@@ -17,7 +17,6 @@ export function RouteTransitionLoader() {
   const startedAt = useRef<number | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Track theme for picking the right GIF (and matching backdrop colour).
   useEffect(() => {
     if (typeof document === "undefined") return;
     const update = () => setIsDark(document.documentElement.classList.contains("dark"));
@@ -54,18 +53,56 @@ export function RouteTransitionLoader() {
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-auto"
+      className="fixed inset-0 z-[300] flex flex-col items-center justify-center pointer-events-auto"
       style={{ backgroundColor: bg, animation: "spLoaderFade 180ms ease-out" }}
       aria-hidden
     >
-      <img
-        src={src}
-        alt=""
-        className="object-contain"
-        style={{ width: "min(60vw, 280px)", height: "min(60vw, 280px)" }}
-        draggable={false}
-      />
-      <style>{`@keyframes spLoaderFade { from { opacity: 0 } to { opacity: 1 } }`}</style>
+      <div className="relative flex items-center justify-center">
+        {/* soft brand glow */}
+        <div
+          className="absolute inset-0 rounded-full blur-2xl opacity-60"
+          style={{
+            background:
+              "radial-gradient(circle, hsl(var(--primary)/0.35) 0%, transparent 70%)",
+          }}
+        />
+        {/* spinning conic ring */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 168,
+            height: 168,
+            background:
+              "conic-gradient(from 0deg, hsl(var(--primary)) 0%, transparent 35%, transparent 65%, hsl(var(--primary)) 100%)",
+            WebkitMask:
+              "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px))",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px))",
+            animation: "spLoaderSpin 1.6s linear infinite",
+            opacity: 0.85,
+          }}
+        />
+        <img
+          src={src}
+          alt=""
+          className="object-contain relative"
+          style={{ width: 128, height: 128 }}
+          draggable={false}
+        />
+      </div>
+      <div className="mt-6 flex items-center gap-1.5">
+        <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground">
+          StudentsPlug
+        </span>
+        <span className="sp-dot" />
+        <span className="sp-dot" style={{ animationDelay: "0.15s" }} />
+        <span className="sp-dot" style={{ animationDelay: "0.3s" }} />
+      </div>
+      <style>{`
+        @keyframes spLoaderFade { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes spLoaderSpin { to { transform: rotate(360deg) } }
+        @keyframes spLoaderDot { 0%,80%,100% { opacity: .25; transform: translateY(0) } 40% { opacity: 1; transform: translateY(-2px) } }
+        .sp-dot { width: 4px; height: 4px; border-radius: 9999px; background: hsl(var(--primary)); display: inline-block; animation: spLoaderDot 1s ease-in-out infinite; }
+      `}</style>
     </div>
   );
 }
