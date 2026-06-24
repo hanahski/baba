@@ -97,10 +97,83 @@ function AiToolPage() {
         <div className="bg-card border rounded-3xl p-5 shadow-card space-y-2">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Result</p>
           {out.type === "image" && out.url && <img src={out.url} alt="" className="rounded-xl w-full" />}
-          {out.type === "text" && <div className="text-sm whitespace-pre-wrap">{out.text}</div>}
-          {out.type === "json" && <pre className="text-xs bg-muted/50 rounded p-3 overflow-x-auto">{JSON.stringify(out.data, null, 2)}</pre>}
+          {out.type === "text" && <div className="text-sm whitespace-pre-wrap leading-relaxed">{out.text}</div>}
+          {out.type === "json" && <PrettyJson data={out.data} />}
         </div>
       )}
     </div>
   );
 }
+
+function isUrl(s: string) {
+  return /^https?:\/\/\S+$/i.test(s);
+}
+function isImageUrl(s: string) {
+  return isUrl(s) && /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(s);
+}
+function isAudioUrl(s: string) {
+  return isUrl(s) && /\.(mp3|wav|ogg|m4a)(\?|#|$)/i.test(s);
+}
+
+function PrettyValue({ value }: { value: any }) {
+  if (value === null || value === undefined)
+    return <span className="text-muted-foreground italic">—</span>;
+  if (typeof value === "boolean")
+    return <span className="font-mono text-primary">{value ? "true" : "false"}</span>;
+  if (typeof value === "number")
+    return <span className="font-mono text-primary">{value}</span>;
+  if (typeof value === "string") {
+    if (isImageUrl(value))
+      return <img src={value} alt="" className="rounded-lg max-h-48 mt-1 border" />;
+    if (isAudioUrl(value))
+      return <audio controls src={value} className="w-full mt-1" />;
+    if (isUrl(value))
+      return (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">
+          {value}
+        </a>
+      );
+    return <span className="whitespace-pre-wrap break-words">{value}</span>;
+  }
+  return <PrettyJson data={value} />;
+}
+
+function PrettyJson({ data, depth = 0 }: { data: any; depth?: number }) {
+  if (data === null || data === undefined)
+    return <p className="text-sm text-muted-foreground italic">No result.</p>;
+  if (Array.isArray(data)) {
+    if (data.length === 0)
+      return <p className="text-sm text-muted-foreground italic">Empty list.</p>;
+    return (
+      <div className="space-y-3">
+        {data.map((item, i) => (
+          <div key={i} className="rounded-xl border bg-muted/30 p-3">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">#{i + 1}</p>
+            <PrettyValue value={item} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (typeof data === "object") {
+    const entries = Object.entries(data).filter(([, v]) => v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
+    if (entries.length === 0)
+      return <p className="text-sm text-muted-foreground italic">No fields.</p>;
+    return (
+      <div className={depth === 0 ? "space-y-2.5" : "space-y-1.5 ml-2 mt-1 border-l-2 border-muted pl-3"}>
+        {entries.map(([k, v]) => (
+          <div key={k} className="text-sm">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mr-2">
+              {k.replace(/_/g, " ")}
+            </span>
+            <div className="mt-0.5">
+              <PrettyValue value={v} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <PrettyValue value={data} />;
+}
+

@@ -17,6 +17,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as RedeemRouteImport } from './routes/redeem'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NewsRouteImport } from './routes/news'
@@ -134,6 +135,11 @@ const SavedRoute = SavedRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RedeemRoute = RedeemRouteImport.update({
@@ -553,6 +559,7 @@ export interface FileRoutesByFullPath {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/redeem': typeof RedeemRoute
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/saved': typeof SavedRoute
   '/search': typeof SearchRoute
@@ -640,6 +647,7 @@ export interface FileRoutesByTo {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/redeem': typeof RedeemRoute
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/saved': typeof SavedRoute
   '/search': typeof SearchRoute
@@ -728,6 +736,7 @@ export interface FileRoutesById {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/redeem': typeof RedeemRoute
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/saved': typeof SavedRoute
   '/search': typeof SearchRoute
@@ -818,6 +827,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/redeem'
+    | '/report'
     | '/reset-password'
     | '/saved'
     | '/search'
@@ -905,6 +915,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/redeem'
+    | '/report'
     | '/reset-password'
     | '/saved'
     | '/search'
@@ -992,6 +1003,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/redeem'
+    | '/report'
     | '/reset-password'
     | '/saved'
     | '/search'
@@ -1081,6 +1093,7 @@ export interface RootRouteChildren {
   NewsRoute: typeof NewsRoute
   PrivacyRoute: typeof PrivacyRoute
   RedeemRoute: typeof RedeemRoute
+  ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SavedRoute: typeof SavedRoute
   SearchRoute: typeof SearchRoute
@@ -1183,6 +1196,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/redeem': {
@@ -1846,6 +1866,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsRoute: NewsRoute,
   PrivacyRoute: PrivacyRoute,
   RedeemRoute: RedeemRoute,
+  ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SavedRoute: SavedRoute,
   SearchRoute: SearchRoute,
