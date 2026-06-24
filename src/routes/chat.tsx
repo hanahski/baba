@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import {
   ArrowLeft,
+  Bell,
+  BellOff,
   Check,
   CheckCheck,
   Crown,
@@ -37,6 +39,14 @@ import { playNewMessageTone } from "@/lib/sounds";
 
 const PLUG_AI_THREAD_ID = "plug-ai";
 const PLUG_AI_STORAGE_KEY = (uid: string) => `plug-ai-msgs:${uid}`;
+const DM_NOTIF_KEY = "dm-notif-on";
+
+function dmNotifEnabled(): boolean {
+  try { return localStorage.getItem(DM_NOTIF_KEY) !== "0"; } catch { return true; }
+}
+function setDmNotifEnabled(on: boolean) {
+  try { localStorage.setItem(DM_NOTIF_KEY, on ? "1" : "0"); } catch {}
+}
 
 type ChatSearch = { t?: string; tab?: "dms" | "campus" | "nearby"; newGroup?: boolean; groupName?: string };
 
@@ -253,15 +263,24 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
     },
   });
 
+  const [notifOn, setNotifOn] = useState<boolean>(() => dmNotifEnabled());
+  useEffect(() => { setDmNotifEnabled(notifOn); }, [notifOn]);
+  const notifOnRef = useRef(notifOn);
+  useEffect(() => { notifOnRef.current = notifOn; }, [notifOn]);
+
   useEffect(() => {
     const ch = supabase
       .channel(`dm-threads-${meId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, () =>
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, (payload) => {
+        qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
+        const row: any = payload.new;
+        if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
+          try { playNewMessageTone(); } catch {}
+        }
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
@@ -279,7 +298,18 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
       <aside className={`${activeThread ? "hidden md:block" : "block"} bg-card border rounded-2xl overflow-hidden md:flex md:flex-col relative`}>
         <div className="p-3 border-b flex items-center justify-between gap-2">
           <h2 className="font-semibold text-sm">Conversations</h2>
-          <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setNotifOn((v) => !v)}
+              title={notifOn ? "Mute message sounds" : "Unmute message sounds"}
+              aria-label={notifOn ? "Mute message sounds" : "Unmute message sounds"}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+            >
+              {notifOn ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4 text-destructive" />}
+            </button>
+            <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <button
@@ -483,7 +513,15 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "dm_messages", filter: `thread_id=eq.${threadId}` },
-        () => qc.invalidateQueries({ queryKey: ["dm", threadId] }),
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["dm", threadId] });
+          if (payload.eventType === "INSERT") {
+            const row: any = payload.new;
+            if (row?.sender_id && row.sender_id !== meId && dmNotifEnabled()) {
+              try { playNewMessageTone(); } catch {}
+            }
+          }
+        },
       )
       .on(
         "postgres_changes",
@@ -1059,7 +1097,8 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
     () => msgs.reduce((n, m) => n + (m.images?.length ?? 0), 0),
     [msgs],
   );
-  const remainingImgSlots = Math.max(0, 25 - existingImgCount - pendingImages.length);
+  // Plug AI is limited to ONE image per message for clarity + speed.
+  const remainingImgSlots = Math.max(0, 1 - pendingImages.length);
 
   useEffect(() => {
     try {
@@ -1105,11 +1144,11 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!arr.length) return;
     if (remainingImgSlots <= 0) {
-      toast.error("You've hit the 25-image limit for this chat");
+      toast.error("Only 1 image at a time — remove the current one to attach another");
       return;
     }
     const slice = arr.slice(0, remainingImgSlots);
-    if (arr.length > remainingImgSlots) toast.info(`Only added ${slice.length} (25 max per chat)`);
+    if (arr.length > 1) toast.info("Plug AI accepts 1 image per message");
     try {
       const urls = await Promise.all(slice.map(fileToDataUrlAi));
       setPendingImages((p) => [...p, ...urls]);
@@ -1199,7 +1238,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
             <span className="text-[9px] uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">AI</span>
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Super-intelligent · Problem solver · {existingImgCount}/25 images
+            Super-intelligent · Problem solver · 1 image / message
           </div>
         </div>
         {msgs.length > 0 && (
@@ -1312,7 +1351,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
           ref={imgInputRef}
           type="file"
           accept="image/*"
-          multiple
+          
           className="hidden"
           onChange={(e) => { void pickImages(e.target.files); e.target.value = ""; }}
         />
@@ -1322,7 +1361,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
           size="icon"
           onClick={() => imgInputRef.current?.click()}
           disabled={thinking || remainingImgSlots === 0}
-          title={remainingImgSlots === 0 ? "25-image limit reached" : `Attach images (${remainingImgSlots} left)`}
+          title={remainingImgSlots === 0 ? "Remove the attached image to add another" : "Attach an image"}
         >
           <ImagePlus className="w-5 h-5" />
         </Button>

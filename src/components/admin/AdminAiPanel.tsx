@@ -6,11 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { playAdminAiReplyChime } from "@/lib/sounds";
 import {
   Terminal, Send, Loader2, Trash2, CheckCircle2, XCircle, Radio,
   Image as ImageIcon, Paperclip, X, FileText, FileCode2, Download, Cpu,
+  Bell, BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
+
+const NOTIF_PREF_KEY = "admin-ai-notif-on";
 
 type Attachment = { url: string; name: string; mime: string; kind: "image" | "file"; size: number };
 
@@ -55,6 +59,11 @@ export function AdminAiPanel() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const seenIds = useRef(new Set<string>());
+  const [notifOn, setNotifOn] = useState<boolean>(() => {
+    try { return localStorage.getItem(NOTIF_PREF_KEY) !== "0"; } catch { return true; }
+  });
+  const notifOnRef = useRef(notifOn);
+  useEffect(() => { notifOnRef.current = notifOn; try { localStorage.setItem(NOTIF_PREF_KEY, notifOn ? "1" : "0"); } catch {} }, [notifOn]);
 
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(msgs.slice(-80))); }, [msgs]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
@@ -87,6 +96,7 @@ export function AdminAiPanel() {
         if (seenIds.current.has(r.id)) return;
         seenIds.current.add(r.id);
         setMsgs((m) => [...m, { id: `p-${r.id}`, role: "assistant", content: r.content, proactive: true, kind: r.kind }]);
+        if (notifOnRef.current) { try { playAdminAiReplyChime(); } catch {} }
         if (r.kind !== "scheduled_done") toast.info("Console: " + String(r.content).slice(0, 80));
       })
       .subscribe();
@@ -143,6 +153,7 @@ export function AdminAiPanel() {
         },
       });
       setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", content: res.reply || "(no reply)", executed: res.executed }]);
+      if (notifOnRef.current) { try { playAdminAiReplyChime(); } catch {} }
     } catch (e: any) {
       setMsgs((m) => [...m, { id: `e-${Date.now()}`, role: "assistant", content: `⚠️ ${e?.message ?? String(e)}` }]);
       toast.error(e?.message ?? "Console failed");
@@ -203,9 +214,20 @@ export function AdminAiPanel() {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={clear} className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10">
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setNotifOn((v) => !v)}
+            title={notifOn ? "Mute reply sound" : "Unmute reply sound"}
+            className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10"
+          >
+            {notifOn ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clear} className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Transcript */}
@@ -296,6 +318,23 @@ export function AdminAiPanel() {
                   <div className="mt-2 space-y-1">
                     {generated.map((f, i) => {
                       const Icon = fileIcon(f.mime);
+                      const isImage = f.mime.startsWith("image/");
+                      if (isImage) {
+                        return (
+                          <div key={i} className="space-y-1">
+                            <img src={f.url} alt={f.filename} className="rounded-lg border border-emerald-400/40 max-h-80 w-auto" />
+                            <a
+                              href={f.url}
+                              download={f.filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 hover:text-emerald-100"
+                            >
+                              <Download className="w-3 h-3" /> {f.filename}{f.size > 0 ? ` · ${humanSize(f.size)}` : ""}
+                            </a>
+                          </div>
+                        );
+                      }
                       return (
                         <a
                           key={i}

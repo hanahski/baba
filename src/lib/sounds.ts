@@ -282,4 +282,57 @@ export function playTicketScanFail() {
   }
 }
 
+/**
+ * Signature "Console reply" chime for the Admin AI panel.
+ * Distinct futuristic two-step pulse + glassy chord so the admin instantly
+ * recognises a Co-Admin response vs. any other ping.
+ */
+export function playAdminAiReplyChime() {
+  const audio = getCtx();
+  if (!audio) return;
+  ensureRunning(audio);
+  const now = audio.currentTime;
+  const master = audio.createGain();
+  master.gain.value = 0.32;
+  master.connect(audio.destination);
+
+  // Step 1: short low blip (square) — "tap"
+  const blip = audio.createOscillator();
+  const blipG = audio.createGain();
+  blip.type = "square";
+  blip.frequency.setValueAtTime(420, now);
+  blip.frequency.exponentialRampToValueAtTime(620, now + 0.08);
+  blipG.gain.setValueAtTime(0.0001, now);
+  blipG.gain.exponentialRampToValueAtTime(0.8, now + 0.008);
+  blipG.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+  blip.connect(blipG).connect(master);
+  blip.start(now); blip.stop(now + 0.12);
+
+  // Step 2: shimmering chord (E5 + B5 + E6) — "shine"
+  const chord = [659, 988, 1319];
+  for (const f of chord) {
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    o.type = "triangle";
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, now + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.6, now + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    o.connect(g).connect(master);
+    o.start(now + 0.12); o.stop(now + 0.75);
+  }
+  // Sparkle accent
+  const spk = audio.createOscillator();
+  const spkG = audio.createGain();
+  spk.type = "sine";
+  spk.frequency.setValueAtTime(2637, now + 0.22);
+  spk.frequency.exponentialRampToValueAtTime(3520, now + 0.42);
+  spkG.gain.setValueAtTime(0.0001, now + 0.22);
+  spkG.gain.exponentialRampToValueAtTime(0.4, now + 0.25);
+  spkG.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+  spk.connect(spkG).connect(master);
+  spk.start(now + 0.22); spk.stop(now + 0.6);
+}
+
+
 
