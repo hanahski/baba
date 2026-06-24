@@ -96,6 +96,7 @@ export function AdminAiPanel() {
         if (seenIds.current.has(r.id)) return;
         seenIds.current.add(r.id);
         setMsgs((m) => [...m, { id: `p-${r.id}`, role: "assistant", content: r.content, proactive: true, kind: r.kind }]);
+        if (notifOnRef.current) { try { playAdminAiReplyChime(); } catch {} }
         if (r.kind !== "scheduled_done") toast.info("Console: " + String(r.content).slice(0, 80));
       })
       .subscribe();
@@ -152,6 +153,7 @@ export function AdminAiPanel() {
         },
       });
       setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", content: res.reply || "(no reply)", executed: res.executed }]);
+      if (notifOnRef.current) { try { playAdminAiReplyChime(); } catch {} }
     } catch (e: any) {
       setMsgs((m) => [...m, { id: `e-${Date.now()}`, role: "assistant", content: `⚠️ ${e?.message ?? String(e)}` }]);
       toast.error(e?.message ?? "Console failed");
@@ -212,9 +214,20 @@ export function AdminAiPanel() {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={clear} className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10">
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setNotifOn((v) => !v)}
+            title={notifOn ? "Mute reply sound" : "Unmute reply sound"}
+            className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10"
+          >
+            {notifOn ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clear} className="text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Transcript */}
