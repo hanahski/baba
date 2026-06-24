@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { isInApp, supportsNativeGoogle, requestNativeGoogleSignIn } from "@/lib/app-bridge";
+import { supportsNativeGoogle, requestNativeGoogleSignIn } from "@/lib/app-bridge";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { claimSeedAdminRole } from "@/lib/admin-role";
 
 const SEED_ADMIN_EMAILS = new Set(["admin+qx162n@ebsuplug.app", "consequenceoct@gmail.com"]);
+const GOOGLE_REDIRECT_KEY = "studentsplug:google-redirect";
 
 function isSeedAdminEmail(value: string) {
   return SEED_ADMIN_EMAILS.has(value.trim().toLowerCase());
@@ -22,6 +23,35 @@ function isInvalidLoginError(error: unknown) {
     .includes("invalid login credentials");
 }
 
+function getSafeRedirect(value?: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/~oauth")) return "/";
+  return value;
+}
+
+function getStoredGoogleRedirect() {
+  try {
+    return getSafeRedirect(sessionStorage.getItem(GOOGLE_REDIRECT_KEY) ?? undefined);
+  } catch {
+    return "/";
+  }
+}
+
+function storeGoogleRedirect(value: string) {
+  try {
+    sessionStorage.setItem(GOOGLE_REDIRECT_KEY, getSafeRedirect(value));
+  } catch {
+    // ignore storage failures; Google sign-in still works without post-login redirect
+  }
+}
+
+function clearStoredGoogleRedirect() {
+  try {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string | undefined) ?? undefined }),
   component: LoginPage,
@@ -29,17 +59,23 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { redirect: redirectParam } = Route.useSearch();
-  const redirect = redirectParam || "/";
+  const redirect = getSafeRedirect(redirectParam);
   const nav = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [inIframe, setInIframe] = useState(false);
   useEffect(() => {
-    try { setInIframe(window.self !== window.top); } catch { setInIframe(true); }
-  }, []);
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled || !data.session) return;
+      const target = getStoredGoogleRedirect() || redirect;
+      clearStoredGoogleRedirect();
+      await nav({ to: target });
+    });
+    return () => { cancelled = true; };
+  }, [nav, redirect]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,8 +188,9 @@ function LoginPage() {
     }
 
     try {
+      storeGoogleRedirect(redirect);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}${redirect}`,
+        redirect_uri: `${window.location.origin}/login`,
         extraParams: { prompt: "select_account" },
       });
       console.log("[GoogleSignIn] result", {
@@ -172,7 +209,8 @@ function LoginPage() {
         return;
       }
       if (result.redirected) return;
-      nav({ to: redirect });
+      clearStoredGoogleRedirect();
+      await nav({ to: redirect });
     } catch (err: any) {
       console.error("[GoogleSignIn] threw", {
         name: err?.name,
@@ -198,20 +236,6 @@ function LoginPage() {
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
         </Button>
-
-        {inIframe && !isInApp() && (
-          <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
-            Google sign-in is blocked inside the preview frame. {" "}
-            <button
-              type="button"
-              className="underline font-semibold"
-              onClick={() => window.open(window.location.href, "_blank", "noopener")}
-            >
-              Open in a new tab
-            </button>{" "}
-            to continue, or use email/password below.
-          </div>
-        )}
 
         <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />or<div className="flex-1 h-px bg-border" /></div>
 
