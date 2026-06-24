@@ -1238,7 +1238,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
             <span className="text-[9px] uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">AI</span>
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Super-intelligent · Problem solver · {existingImgCount}/25 images
+            Super-intelligent · Problem solver · 1 image / message
           </div>
         </div>
         {msgs.length > 0 && (
@@ -1361,7 +1361,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
           size="icon"
           onClick={() => imgInputRef.current?.click()}
           disabled={thinking || remainingImgSlots === 0}
-          title={remainingImgSlots === 0 ? "25-image limit reached" : `Attach images (${remainingImgSlots} left)`}
+          title={remainingImgSlots === 0 ? "Remove the attached image to add another" : "Attach an image"}
         >
           <ImagePlus className="w-5 h-5" />
         </Button>
