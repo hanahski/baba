@@ -229,9 +229,9 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-background via-accent/30 to-background">
       <div className="w-full max-w-md bg-card border rounded-3xl shadow-card p-6 md:p-8">
-        <Link to="/" className="font-display font-bold inline-flex items-center gap-0">
-          <img src={brandLogo.url} alt="" className="h-14 w-14 object-contain -mr-1" />
-          <span className="text-xl leading-none text-muted-foreground/80 tracking-tight">tudentsPlug</span>
+        <Link to="/" className="font-bold text-gradient font-display inline-flex items-center gap-0.5">
+          <img src={brandLogo.url} alt="" className="h-10 w-10 object-contain" />
+          <span className="text-sm leading-none">tudentsPlug</span>
         </Link>
         <h1 className="mt-4 text-2xl font-bold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
         <p className="text-sm text-muted-foreground">{mode === "signin" ? "Sign in to read posts, download files, and rank up." : "Join the plug. Free forever."}</p>
