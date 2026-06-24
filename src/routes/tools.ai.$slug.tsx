@@ -97,8 +97,8 @@ function AiToolPage() {
         <div className="bg-card border rounded-3xl p-5 shadow-card space-y-2">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Result</p>
           {out.type === "image" && out.url && <img src={out.url} alt="" className="rounded-xl w-full" />}
-          {out.type === "text" && <div className="text-sm whitespace-pre-wrap">{out.text}</div>}
-          {out.type === "json" && <pre className="text-xs bg-muted/50 rounded p-3 overflow-x-auto">{JSON.stringify(out.data, null, 2)}</pre>}
+          {out.type === "text" && <div className="text-sm whitespace-pre-wrap leading-relaxed">{out.text}</div>}
+          {out.type === "json" && <PrettyJson data={out.data} />}
         </div>
       )}
     </div>
