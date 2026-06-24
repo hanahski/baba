@@ -59,6 +59,11 @@ export function AdminAiPanel() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const seenIds = useRef(new Set<string>());
+  const [notifOn, setNotifOn] = useState<boolean>(() => {
+    try { return localStorage.getItem(NOTIF_PREF_KEY) !== "0"; } catch { return true; }
+  });
+  const notifOnRef = useRef(notifOn);
+  useEffect(() => { notifOnRef.current = notifOn; try { localStorage.setItem(NOTIF_PREF_KEY, notifOn ? "1" : "0"); } catch {} }, [notifOn]);
 
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(msgs.slice(-80))); }, [msgs]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
