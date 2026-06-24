@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/dictionary")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       GET: async ({ request }) => {
         const apiKey = process.env.PARSE_API_KEY;
-        if (!apiKey) return json({ error: "Dictionary service not configured" }, 500);
+        if (!apiKey) return json({ error: "SERVICE_UNAVAILABLE", fallback: true, message: "Dictionary service not configured" });
 
         const u = new URL(request.url);
         const parsed = QuerySchema.safeParse({
