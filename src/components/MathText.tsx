@@ -1,11 +1,6 @@
 import "katex/dist/katex.min.css";
-import katex from "react-katex";
+import { BlockMath, InlineMath } from "react-katex";
 import { useMemo } from "react";
-
-const { BlockMath, InlineMath } = katex as unknown as {
-  BlockMath: React.ComponentType<{ math: string }>;
-  InlineMath: React.ComponentType<{ math: string }>;
-};
 
 /**
  * Renders text containing LaTeX math wrapped in $...$ (inline) or $$...$$ (block).
