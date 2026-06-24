@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   Shield, Trash2, ShoppingBag, FileText, Users, LayoutDashboard,
   Inbox, Image as ImageIcon, BadgeCheck, Star, Sparkles, Plug, Ban, CheckCircle2,
-  Flag, BookOpen, ShieldCheck, Ticket, Wand2, Newspaper, Coins, ScanLine, Library, GraduationCap, Tag,
+  BookOpen, ShieldCheck, Ticket, Wand2, Newspaper, Coins, ScanLine, Library, GraduationCap, Tag,
 } from "lucide-react";
 import { ToolEditor } from "@/components/admin/ToolEditor";
 import { ToolPricesPanel } from "@/components/admin/ToolPricesPanel";
