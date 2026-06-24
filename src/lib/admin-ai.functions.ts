@@ -135,6 +135,7 @@ const TOOLS = [
   { type: "function", function: { name: "create_text_file", description: "Create any text-based file (source code, config, markup) the admin can download. Use for .java, .kt, .xml, .gradle, .ts, .tsx, .js, .py, .json, .yaml, .html, .css, .md, .txt, .sh, .sql, Dockerfile, etc. Write COMPLETE working content — no placeholders.", parameters: { type: "object", properties: { filename: { type: "string", description: "Filename including extension, e.g. MainActivity.kt" }, content: { type: "string", description: "Full file contents." } }, required: ["filename", "content"] } } },
   { type: "function", function: { name: "create_pdf", description: "Generate a downloadable PDF. Body accepts simple markdown: # H1, ## H2, ### H3, paragraphs, blank lines. Use for reports, notes, briefs, contracts.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string", description: "Markdown-flavored body." } }, required: ["filename", "body"] } } },
   { type: "function", function: { name: "create_docx", description: "Generate a downloadable Microsoft Word (.docx) document. Body accepts simple markdown.", parameters: { type: "object", properties: { filename: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, required: ["filename", "body"] } } },
+  { type: "function", function: { name: "generate_image", description: "Generate a brand-new image from a text prompt using Gemini Nano Banana. Returns a downloadable PNG. Use for mockups, illustrations, banner art, infographics, social posts. The image is auto-rendered inline in the admin chat with a download chip.", parameters: { type: "object", properties: { prompt: { type: "string", description: "Detailed image description." }, filename: { type: "string", description: "Optional filename (defaults to image.png)." } }, required: ["prompt"] } } },
 ];
 
 async function uploadGeneratedFile(userId: string, filename: string, bytes: Buffer | Uint8Array, mime: string): Promise<{ url: string; filename: string; size: number; mime: string }> {
@@ -572,6 +573,32 @@ export async function executeAdminTool(name: string, args: any, actingUserId: st
       const out = await uploadGeneratedFile(actingUserId, filename.endsWith(".docx") ? filename : filename + ".docx", bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
       return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime: out.mime };
     }
+    case "generate_image": {
+      const apiKey = process.env.LOVABLE_API_KEY;
+      if (!apiKey) throw new Error("AI not configured");
+      const prompt = String(args.prompt || "").slice(0, 4000);
+      if (!prompt) throw new Error("prompt required");
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+      if (!res.ok) throw new Error(`image gen failed ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const j = await res.json();
+      const dataUrl: string | undefined = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!dataUrl?.startsWith("data:")) throw new Error("image gen returned no image");
+      const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (!m) throw new Error("bad image data");
+      const mime = m[1] || "image/png";
+      const ext = (mime.split("/")[1] || "png").replace(/[^a-z0-9]/gi, "");
+      const filename = String(args.filename || `image.${ext}`);
+      const out = await uploadGeneratedFile(actingUserId, filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`, Buffer.from(m[2], "base64"), mime);
+      return { ok: true, file_url: out.url, filename: out.filename, size: out.size, mime, prompt };
+    }
     default:
       throw new Error(`unknown tool: ${name}`);
   }
@@ -648,7 +675,7 @@ export const adminAiChat = createServerFn({ method: "POST" })
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "google/gemini-2.5-pro", messages, tools: TOOLS, tool_choice: "auto" }),
+        body: JSON.stringify({ model: "openai/gpt-5.5", messages, tools: TOOLS, tool_choice: "auto" }),
       });
 
       if (res.status === 429) throw new Error("Admin AI is busy. Try again.");
