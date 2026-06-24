@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/dictionary")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       GET: async ({ request }) => {
         const apiKey = process.env.PARSE_API_KEY;
-        if (!apiKey) return json({ error: "Dictionary service not configured" }, 500);
+        if (!apiKey) return json({ error: "SERVICE_UNAVAILABLE", fallback: true, message: "Dictionary service not configured" });
 
         const u = new URL(request.url);
         const parsed = QuerySchema.safeParse({
@@ -74,11 +74,11 @@ export const Route = createFileRoute("/api/dictionary")({
         try {
           const res = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": apiKey } });
           const data = await res.json().catch(() => null);
-          if (!res.ok) return json({ error: `Upstream ${res.status}`, data }, res.status >= 500 ? 502 : 400);
+          if (!res.ok) return json({ error: "UPSTREAM_ERROR", fallback: true, status: res.status, data });
           return json(data ?? {});
         } catch (e) {
           console.error("[dictionary] failed", e);
-          return json({ error: "Could not reach dictionary service" }, 502);
+          return json({ error: "SERVICE_FAILED", fallback: true });
         }
       },
     },
