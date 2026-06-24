@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { claimSeedAdminRole } from "@/lib/admin-role";
+import brandLogo from "@/assets/brand-logo.png.asset.json";
 
 const SEED_ADMIN_EMAILS = new Set(["admin+qx162n@ebsuplug.app", "consequenceoct@gmail.com"]);
 const GOOGLE_REDIRECT_KEY = "studentsplug:google-redirect";
