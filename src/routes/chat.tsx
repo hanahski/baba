@@ -1351,7 +1351,7 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
           ref={imgInputRef}
           type="file"
           accept="image/*"
-          multiple
+          
           className="hidden"
           onChange={(e) => { void pickImages(e.target.files); e.target.value = ""; }}
         />
