@@ -513,7 +513,15 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "dm_messages", filter: `thread_id=eq.${threadId}` },
-        () => qc.invalidateQueries({ queryKey: ["dm", threadId] }),
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["dm", threadId] });
+          if (payload.eventType === "INSERT") {
+            const row: any = payload.new;
+            if (row?.sender_id && row.sender_id !== meId && dmNotifEnabled()) {
+              try { playNewMessageTone(); } catch {}
+            }
+          }
+        },
       )
       .on(
         "postgres_changes",
