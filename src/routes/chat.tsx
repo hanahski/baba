@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import {
   ArrowLeft,
+  Bell,
+  BellOff,
   Check,
   CheckCheck,
   Crown,
@@ -37,6 +39,14 @@ import { playNewMessageTone } from "@/lib/sounds";
 
 const PLUG_AI_THREAD_ID = "plug-ai";
 const PLUG_AI_STORAGE_KEY = (uid: string) => `plug-ai-msgs:${uid}`;
+const DM_NOTIF_KEY = "dm-notif-on";
+
+function dmNotifEnabled(): boolean {
+  try { return localStorage.getItem(DM_NOTIF_KEY) !== "0"; } catch { return true; }
+}
+function setDmNotifEnabled(on: boolean) {
+  try { localStorage.setItem(DM_NOTIF_KEY, on ? "1" : "0"); } catch {}
+}
 
 type ChatSearch = { t?: string; tab?: "dms" | "campus" | "nearby"; newGroup?: boolean; groupName?: string };
 
