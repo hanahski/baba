@@ -318,6 +318,23 @@ export function AdminAiPanel() {
                   <div className="mt-2 space-y-1">
                     {generated.map((f, i) => {
                       const Icon = fileIcon(f.mime);
+                      const isImage = f.mime.startsWith("image/");
+                      if (isImage) {
+                        return (
+                          <div key={i} className="space-y-1">
+                            <img src={f.url} alt={f.filename} className="rounded-lg border border-emerald-400/40 max-h-80 w-auto" />
+                            <a
+                              href={f.url}
+                              download={f.filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 hover:text-emerald-100"
+                            >
+                              <Download className="w-3 h-3" /> {f.filename}{f.size > 0 ? ` · ${humanSize(f.size)}` : ""}
+                            </a>
+                          </div>
+                        );
+                      }
                       return (
                         <a
                           key={i}
