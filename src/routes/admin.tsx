@@ -54,7 +54,7 @@ function AdminPanel() {
     { k: "users", label: "Users", icon: Users },
     { k: "applications", label: "Applications", icon: Inbox },
     { k: "verifications", label: "Verifications", icon: GraduationCap },
-    { k: "reports", label: "Reports", icon: Flag },
+    
     { k: "posts", label: "Posts", icon: FileText },
     { k: "listings", label: "Listings", icon: ShoppingBag },
     { k: "tickets", label: "Tickets", icon: Ticket },
@@ -89,7 +89,7 @@ function AdminPanel() {
         {tab === "users" && <AdminUsers />}
         {tab === "applications" && <AdminApplications />}
         {tab === "verifications" && <AdminVerifications />}
-        {tab === "reports" && <AdminReports />}
+        
         {tab === "posts" && <AdminPosts />}
         {tab === "listings" && <AdminListings />}
         {tab === "tickets" && <AdminTickets />}
@@ -141,7 +141,7 @@ function AdminDashboard() {
         <StatCard label="Total listings" value={stats?.total_listings} icon={ShoppingBag} />
         <StatCard label="Tickets sold" value={stats?.total_tickets_sold} icon={Ticket} />
         <StatCard label="Pending badges" value={stats?.pending_applications} icon={Inbox} />
-        <StatCard label="Pending reports" value={stats?.pending_reports} icon={Flag} />
+        
       </div>
       <div className="bg-card border rounded-2xl p-4">
         <h3 className="font-semibold mb-2">Rank distribution</h3>
@@ -364,45 +364,6 @@ function AdminPosts() {
   );
 }
 
-function AdminReports() {
-  const { data, refetch } = useQuery({
-    queryKey: ["admin-reports"],
-    queryFn: async () => (await supabase.from("user_reports" as any).select("*").order("created_at", { ascending: false }).limit(100)).data ?? [],
-  });
-  const review = async (id: string, status: "reviewed" | "dismissed") => {
-    const { error } = await supabase.from("user_reports" as any)
-      .update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
-    if (error) toast.error(error.message); else { toast.success(`Marked ${status}`); refetch(); }
-  };
-  return (
-    <div className="space-y-2">
-      {(data ?? []).length === 0 && <p className="text-sm text-muted-foreground p-6 text-center">No reports yet.</p>}
-      {(data ?? []).map((r: any) => (
-        <div key={r.id} className="bg-card border rounded-2xl p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              <Flag className="w-3 h-3 inline mr-1" />
-              {r.category} · {new Date(r.created_at).toLocaleString()}
-            </p>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-amber-500/20 text-amber-700 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>{r.status}</span>
-          </div>
-          <p className="text-sm whitespace-pre-wrap">{r.reason}</p>
-          <p className="text-[11px] text-muted-foreground">
-            {r.target_post_id && <>Post: <Link to="/post/$id" params={{ id: r.target_post_id }} className="text-primary hover:underline">view</Link> · </>}
-            {r.target_user_id && <>User: <Link to="/profile/$id" params={{ id: r.target_user_id }} className="text-primary hover:underline">view</Link> · </>}
-            {r.target_listing_id && <>Listing: <Link to="/market/$id" params={{ id: r.target_listing_id }} className="text-primary hover:underline">view</Link></>}
-          </p>
-          {r.status === "pending" && (
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => review(r.id, "reviewed")}>Mark reviewed</Button>
-              <Button size="sm" variant="outline" onClick={() => review(r.id, "dismissed")}>Dismiss</Button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function AdminListings() {
   const { data, refetch } = useQuery({
