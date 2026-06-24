@@ -1097,7 +1097,8 @@ function PlugAiPane({ meId, onBack }: { meId: string; onBack: () => void }) {
     () => msgs.reduce((n, m) => n + (m.images?.length ?? 0), 0),
     [msgs],
   );
-  const remainingImgSlots = Math.max(0, 25 - existingImgCount - pendingImages.length);
+  // Plug AI is limited to ONE image per message for clarity + speed.
+  const remainingImgSlots = Math.max(0, 1 - pendingImages.length);
 
   useEffect(() => {
     try {
