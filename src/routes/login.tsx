@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { claimSeedAdminRole } from "@/lib/admin-role";
 
 const SEED_ADMIN_EMAILS = new Set(["admin+qx162n@ebsuplug.app", "consequenceoct@gmail.com"]);
+const GOOGLE_REDIRECT_KEY = "studentsplug:google-redirect";
 
 function isSeedAdminEmail(value: string) {
   return SEED_ADMIN_EMAILS.has(value.trim().toLowerCase());
@@ -25,6 +26,30 @@ function isInvalidLoginError(error: unknown) {
 function getSafeRedirect(value?: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/~oauth")) return "/";
   return value;
+}
+
+function getStoredGoogleRedirect() {
+  try {
+    return getSafeRedirect(sessionStorage.getItem(GOOGLE_REDIRECT_KEY) ?? undefined);
+  } catch {
+    return "/";
+  }
+}
+
+function storeGoogleRedirect(value: string) {
+  try {
+    sessionStorage.setItem(GOOGLE_REDIRECT_KEY, getSafeRedirect(value));
+  } catch {
+    // ignore storage failures; Google sign-in still works without post-login redirect
+  }
+}
+
+function clearStoredGoogleRedirect() {
+  try {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 export const Route = createFileRoute("/login")({
@@ -45,6 +70,17 @@ function LoginPage() {
   useEffect(() => {
     try { setInIframe(window.self !== window.top); } catch { setInIframe(true); }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled || !data.session) return;
+      const target = getStoredGoogleRedirect() || redirect;
+      clearStoredGoogleRedirect();
+      await nav({ to: target });
+    });
+    return () => { cancelled = true; };
+  }, [nav, redirect]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,8 +193,9 @@ function LoginPage() {
     }
 
     try {
+      storeGoogleRedirect(redirect);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/login`,
         extraParams: { prompt: "select_account" },
       });
       console.log("[GoogleSignIn] result", {
@@ -177,6 +214,7 @@ function LoginPage() {
         return;
       }
       if (result.redirected) return;
+      clearStoredGoogleRedirect();
       await nav({ to: redirect });
     } catch (err: any) {
       console.error("[GoogleSignIn] threw", {
