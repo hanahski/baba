@@ -23,7 +23,7 @@ import { claimSeedAdminRole, getIsAdminUser } from "@/lib/admin-role";
 
 export const Route = createFileRoute("/admin")({ component: AdminPanel });
 
-type Tab = "dashboard" | "ai" | "toolai" | "ebsunews" | "users" | "applications" | "verifications" | "reports" | "posts" | "listings" | "tickets" | "scans" | "catalogue" | "marketcats" | "banners" | "tools" | "prices";
+type Tab = "dashboard" | "ai" | "toolai" | "ebsunews" | "users" | "applications" | "verifications" | "posts" | "listings" | "tickets" | "scans" | "catalogue" | "marketcats" | "banners" | "tools" | "prices";
 
 
 function AdminPanel() {
