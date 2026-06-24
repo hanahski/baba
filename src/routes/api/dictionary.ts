@@ -74,11 +74,11 @@ export const Route = createFileRoute("/api/dictionary")({
         try {
           const res = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": apiKey } });
           const data = await res.json().catch(() => null);
-          if (!res.ok) return json({ error: `Upstream ${res.status}`, data }, res.status >= 500 ? 502 : 400);
+          if (!res.ok) return json({ error: "UPSTREAM_ERROR", fallback: true, status: res.status, data });
           return json(data ?? {});
         } catch (e) {
           console.error("[dictionary] failed", e);
-          return json({ error: "Could not reach dictionary service" }, 502);
+          return json({ error: "SERVICE_FAILED", fallback: true });
         }
       },
     },
