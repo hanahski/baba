@@ -536,7 +536,17 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
           if (payload.eventType === "INSERT") {
             const row: any = payload.new;
             if (row?.sender_id && row.sender_id !== meId && dmNotifEnabled()) {
-              try { playNewMessageTone(); } catch {}
+              // If the tab is visible AND on this thread, just play sound; otherwise
+              // also fire a browser notification so the user is notified even when
+              // audio is blocked (iOS) or the tab is hidden.
+              playOrNotify(
+                () => playNewMessageTone(),
+                { title: "New message", body: row.body ?? "", threadId },
+              );
+            }
+            // Immediately mark as read since we're viewing the thread.
+            if (row?.sender_id && row.sender_id !== meId && document.visibilityState === "visible") {
+              void markThreadRead();
             }
           }
         },
