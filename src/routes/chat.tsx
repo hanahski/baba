@@ -268,6 +268,14 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
   useEffect(() => { setDmNotifEnabled(notifOn); }, [notifOn]);
   const notifOnRef = useRef(notifOn);
   useEffect(() => { notifOnRef.current = notifOn; }, [notifOn]);
+  const toggleNotif = async () => {
+    const next = !notifOn;
+    setNotifOn(next);
+    if (next && !notificationsGranted()) {
+      // Best-effort permission request — works because this runs inside a user gesture.
+      await ensureNotificationPermission();
+    }
+  };
 
   useEffect(() => {
     const ch = supabase
@@ -275,11 +283,20 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, async (payload) => {
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
         const row: any = payload.new;
         if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
-          try { playNewMessageTone(); } catch {}
+          let senderName = "New message";
+          try {
+            const { data: p } = await supabase
+              .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
+            if (p?.display_name) senderName = p.display_name;
+          } catch {}
+          playOrNotify(
+            () => playNewMessageTone(),
+            { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
+          );
         }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
