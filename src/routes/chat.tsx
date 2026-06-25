@@ -36,6 +36,7 @@ import { Sparkles, ImagePlus } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { RichText } from "@/components/RichText";
 import { playNewMessageTone } from "@/lib/sounds";
+import { playOrNotify, ensureNotificationPermission, notificationsGranted } from "@/lib/web-notify";
 
 const PLUG_AI_THREAD_ID = "plug-ai";
 const PLUG_AI_STORAGE_KEY = (uid: string) => `plug-ai-msgs:${uid}`;
@@ -267,6 +268,14 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
   useEffect(() => { setDmNotifEnabled(notifOn); }, [notifOn]);
   const notifOnRef = useRef(notifOn);
   useEffect(() => { notifOnRef.current = notifOn; }, [notifOn]);
+  const toggleNotif = async () => {
+    const next = !notifOn;
+    setNotifOn(next);
+    if (next && !notificationsGranted()) {
+      // Best-effort permission request — works because this runs inside a user gesture.
+      await ensureNotificationPermission();
+    }
+  };
 
   useEffect(() => {
     const ch = supabase
@@ -274,11 +283,20 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
       )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, async (payload) => {
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
         const row: any = payload.new;
         if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
-          try { playNewMessageTone(); } catch {}
+          let senderName = "New message";
+          try {
+            const { data: p } = await supabase
+              .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
+            if (p?.display_name) senderName = p.display_name;
+          } catch {}
+          playOrNotify(
+            () => playNewMessageTone(),
+            { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
+          );
         }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
@@ -301,7 +319,7 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setNotifOn((v) => !v)}
+              onClick={toggleNotif}
               title={notifOn ? "Mute message sounds" : "Unmute message sounds"}
               aria-label={notifOn ? "Mute message sounds" : "Unmute message sounds"}
               className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
@@ -518,7 +536,17 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
           if (payload.eventType === "INSERT") {
             const row: any = payload.new;
             if (row?.sender_id && row.sender_id !== meId && dmNotifEnabled()) {
-              try { playNewMessageTone(); } catch {}
+              // If the tab is visible AND on this thread, just play sound; otherwise
+              // also fire a browser notification so the user is notified even when
+              // audio is blocked (iOS) or the tab is hidden.
+              playOrNotify(
+                () => playNewMessageTone(),
+                { title: "New message", body: row.body ?? "", threadId },
+              );
+            }
+            // Immediately mark as read since we're viewing the thread.
+            if (row?.sender_id && row.sender_id !== meId && document.visibilityState === "visible") {
+              void markThreadRead();
             }
           }
         },
