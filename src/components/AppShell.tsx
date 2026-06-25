@@ -93,8 +93,8 @@ function useUnreadChatCount(userId: string | undefined, activeThreadId: string |
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "dm_messages" },
-        (payload) => {
-          const msg = payload.new as { sender_id?: string } | undefined;
+        async (payload) => {
+          const msg = payload.new as { sender_id?: string; body?: string } | undefined;
           const threadId = (payload.new as { thread_id?: string } | undefined)?.thread_id;
           const isOwn = msg?.sender_id === userId;
           const isActive = !!threadId && threadId === activeRef.current;
@@ -102,7 +102,17 @@ function useUnreadChatCount(userId: string | undefined, activeThreadId: string |
           // WhatsApp logic: no notification sound for your own messages,
           // and no sound when the message arrives in the thread you're viewing.
           if (msg?.sender_id && !isOwn && !isActive) {
-            playNewMessageTone();
+            // Look up sender name for a friendlier notification fallback.
+            let senderName = "New message";
+            try {
+              const { data: p } = await supabase
+                .from("profiles").select("display_name").eq("id", msg.sender_id).maybeSingle();
+              if (p?.display_name) senderName = p.display_name;
+            } catch {}
+            playOrNotify(
+              () => playNewMessageTone(),
+              { title: senderName, body: msg.body ?? "Sent you a message", threadId },
+            );
           }
         },
       )
