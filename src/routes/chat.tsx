@@ -319,7 +319,7 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setNotifOn((v) => !v)}
+              onClick={toggleNotif}
               title={notifOn ? "Mute message sounds" : "Unmute message sounds"}
               aria-label={notifOn ? "Mute message sounds" : "Unmute message sounds"}
               className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
