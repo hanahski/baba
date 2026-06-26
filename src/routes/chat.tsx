@@ -449,9 +449,13 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
   const { profile } = useAuth();
   const myName = profile?.display_name ?? "Student";
   const [text, setText] = useState("");
-  const [pendingMsgs, setPendingMsgs] = useState<any[]>([]);
+  const [pendingMsgs, setPendingMsgs] = useState<PendingMsg[]>(() => loadPending(meId, threadId));
   const [membersOpen, setMembersOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const justSentRef = useRef(false);
+  // Persist pending queue so unsent messages survive reloads.
+  useEffect(() => { savePending(meId, threadId, pendingMsgs); }, [meId, threadId, pendingMsgs]);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastTypingSentRef = useRef(0);
   // sender_id -> { name, expiresAt }
