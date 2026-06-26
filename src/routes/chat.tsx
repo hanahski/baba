@@ -856,7 +856,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/30 p-3 space-y-2">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto bg-muted/30 p-3 space-y-2">
         {visibleMsgs.length === 0 && (
           <p className="text-center text-xs text-muted-foreground py-8">No messages yet. Say hi 👋</p>
         )}
@@ -875,22 +875,34 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
                 <div
                   className={`px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap ${
                     mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-card border rounded-bl-sm"
-                  }`}
+                  } ${m._error ? "ring-2 ring-destructive/60" : ""} ${m._pending && !m._error ? "opacity-80" : ""}`}
                 >
                   {m.body}
                 </div>
                 <div className={`text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1 ${mine ? "justify-end" : ""}`}>
                   <span>{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</span>
                   {mine && (
-                    m.read_at ? (
-                      <CheckCheck className="w-3.5 h-3.5 text-primary" aria-label="Read" />
+                    m._error ? (
+                      <span className="flex items-center gap-1 text-destructive">
+                        <AlertCircle className="w-3 h-3" aria-label="Failed to send" />
+                        <button onClick={() => retry(m.id)} className="underline hover:no-underline inline-flex items-center gap-0.5">
+                          <RotateCw className="w-3 h-3" /> Retry
+                        </button>
+                        <button onClick={() => discardPending(m.id)} className="hover:text-foreground">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
                     ) : m._pending ? (
-                      <Check className="w-3 h-3 opacity-40" aria-label="Sending" />
+                      <span aria-label={navigator.onLine ? "Sending" : "Queued — will send when online"}>
+                        {navigator.onLine ? "Sending…" : "Queued"}
+                      </span>
+                    ) : m.read_at ? (
+                      <CheckCheck className="w-3.5 h-3.5 text-primary" aria-label="Read" />
                     ) : (
                       <CheckCheck className="w-3.5 h-3.5 opacity-50" aria-label="Delivered" />
                     )
                   )}
-                  {mine && !m._pending && (
+                  {mine && !m._pending && !m._error && (
                     <button onClick={() => remove(m.id)} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -901,6 +913,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
           );
         })}
       </div>
+
 
       {activeTypers.length > 0 && (
         <div className="px-3 pb-1 -mt-1 text-[11px] text-muted-foreground flex items-center gap-2 animate-fade-in">
