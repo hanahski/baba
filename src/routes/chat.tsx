@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import {
+  AlertCircle,
   ArrowLeft,
   Bell,
   BellOff,
@@ -19,6 +20,7 @@ import {
   MapPin,
   MessageCircle,
   MoreVertical,
+  RotateCw,
   Search,
   Send,
   Trash2,
@@ -47,6 +49,22 @@ function dmNotifEnabled(): boolean {
 }
 function setDmNotifEnabled(on: boolean) {
   try { localStorage.setItem(DM_NOTIF_KEY, on ? "1" : "0"); } catch {}
+}
+
+type PendingMsg = { id: string; sender_id: string; body: string; created_at: string; read_at: null; _pending: true; _error?: boolean };
+const PENDING_KEY = (uid: string, tid: string) => `dm-pending:${uid}:${tid}`;
+function loadPending(meId: string, threadId: string): PendingMsg[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY(meId, threadId));
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function savePending(meId: string, threadId: string, list: PendingMsg[]) {
+  try {
+    if (list.length) localStorage.setItem(PENDING_KEY(meId, threadId), JSON.stringify(list));
+    else localStorage.removeItem(PENDING_KEY(meId, threadId));
+  } catch {}
 }
 
 type ChatSearch = { t?: string; tab?: "dms" | "campus" | "nearby"; newGroup?: boolean; groupName?: string };
@@ -431,9 +449,13 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
   const { profile } = useAuth();
   const myName = profile?.display_name ?? "Student";
   const [text, setText] = useState("");
-  const [pendingMsgs, setPendingMsgs] = useState<any[]>([]);
+  const [pendingMsgs, setPendingMsgs] = useState<PendingMsg[]>(() => loadPending(meId, threadId));
   const [membersOpen, setMembersOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const justSentRef = useRef(false);
+  // Persist pending queue so unsent messages survive reloads.
+  useEffect(() => { savePending(meId, threadId, pendingMsgs); }, [meId, threadId, pendingMsgs]);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastTypingSentRef = useRef(0);
   // sender_id -> { name, expiresAt }
@@ -557,6 +579,26 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
         { event: "*", schema: "public", table: "dm_thread_members", filter: `thread_id=eq.${threadId}` },
         () => qc.invalidateQueries({ queryKey: ["dm", threadId] }),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "dm_thread_reads", filter: `thread_id=eq.${threadId}` },
+        (payload) => {
+          // When the other party's read pointer advances, mark our sent messages
+          // as delivered/read instantly without waiting for a refetch.
+          const row: any = payload.new;
+          if (!row || row.user_id === meId) return;
+          const lastReadAt: string = row.last_read_at;
+          qc.setQueryData(["dm", threadId], (prev: any) => {
+            if (!prev) return prev;
+            const next = (prev.msgs ?? []).map((m: any) =>
+              m.sender_id === meId && !m.read_at && new Date(m.created_at) <= new Date(lastReadAt)
+                ? { ...m, read_at: lastReadAt }
+                : m,
+            );
+            return { ...prev, msgs: next };
+          });
+        },
+      )
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         const p = payload as { user_id?: string; name?: string } | undefined;
         if (!p?.user_id || p.user_id === meId) return;
@@ -601,14 +643,24 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
     const saved = data?.msgs ?? [];
     if (!pendingMsgs.length) return saved;
     const savedIds = new Set(saved.map((m: any) => m.id));
-    return [...saved, ...pendingMsgs.filter((m) => !savedIds.has(m.id))].sort(
+    // Dedupe: if a saved row matches a pending message (same sender, same body,
+    // within a 60s window), drop the pending so we don't double-render after
+    // the realtime INSERT lands before our insert call returns.
+    const matched = (p: PendingMsg) => saved.some((s: any) =>
+      s.sender_id === p.sender_id &&
+      s.body === p.body &&
+      Math.abs(+new Date(s.created_at) - +new Date(p.created_at)) < 60_000,
+    );
+    const stillPending = pendingMsgs.filter((m) => !savedIds.has(m.id) && !matched(m));
+    return [...saved, ...stillPending].sort(
       (a: any, b: any) => +new Date(a.created_at) - +new Date(b.created_at),
     );
   }, [data?.msgs, pendingMsgs]);
 
+  // Reload pending queue when switching threads.
   useEffect(() => {
-    setPendingMsgs([]);
-  }, [threadId]);
+    setPendingMsgs(loadPending(meId, threadId));
+  }, [threadId, meId]);
 
   // Re-mark as read whenever the message list grows while we're on this thread
   useEffect(() => {
@@ -616,53 +668,96 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
     void markThreadRead();
   }, [data?.msgs.length, markThreadRead]);
 
+  // Track whether the user is near the bottom — don't yank the view if
+  // they've scrolled up to read history.
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [visibleMsgs.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const last = visibleMsgs[visibleMsgs.length - 1] as any | undefined;
+    const lastIsMine = !!last && last.sender_id === meId;
+    if (justSentRef.current || isNearBottomRef.current || lastIsMine) {
+      el.scrollTo({ top: el.scrollHeight, behavior: justSentRef.current ? "auto" : "smooth" });
+      justSentRef.current = false;
+    }
+  }, [visibleMsgs.length, meId]);
+
+  // Try to actually persist a pending message to the DB. Marks _error on failure.
+  const attemptSend = useCallback(async (p: PendingMsg) => {
+    setPendingMsgs((prev) => prev.map((m) => m.id === p.id ? { ...m, _error: false } : m));
+    const { data: saved, error } = await supabase
+      .from("dm_messages")
+      .insert({ thread_id: threadId, sender_id: meId, body: p.body })
+      .select("id,sender_id,body,created_at,read_at")
+      .single();
+    if (error) {
+      setPendingMsgs((prev) => prev.map((m) => m.id === p.id ? { ...m, _error: true } : m));
+      if (navigator.onLine) toast.error(error.message);
+      return;
+    }
+    setPendingMsgs((prev) => prev.filter((m) => m.id !== p.id));
+    qc.setQueryData(["dm", threadId], (prev: any) => {
+      if (!prev) return prev;
+      const withoutTemp = (prev.msgs ?? []).filter((m: any) => m.id !== p.id);
+      if (saved && withoutTemp.some((m: any) => m.id === saved.id)) return { ...prev, msgs: withoutTemp };
+      return { ...prev, msgs: [...withoutTemp, saved] };
+    });
+    const ts = saved?.created_at ?? p.created_at;
+    qc.setQueryData(["dm-threads", meId], (prev: any) => Array.isArray(prev)
+      ? prev.map((t: any) => t.id === threadId ? { ...t, last_message_at: ts, last: { body: p.body, sender_id: meId, created_at: ts } } : t)
+      : prev);
+    void supabase.from("dm_threads").update({ last_message_at: ts }).eq("id", threadId);
+    void markThreadRead();
+  }, [meId, threadId, qc, markThreadRead]);
+
+  // Flush any queued messages when we come back online or the thread mounts.
+  useEffect(() => {
+    const flush = () => {
+      if (!navigator.onLine) return;
+      setPendingMsgs((prev) => {
+        for (const p of prev) void attemptSend(p);
+        return prev;
+      });
+    };
+    flush();
+    window.addEventListener("online", flush);
+    return () => window.removeEventListener("online", flush);
+  }, [attemptSend, threadId]);
 
   const send = async () => {
     const body = text.trim();
     if (!body) return;
     const now = new Date().toISOString();
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const optimistic = { id: tempId, sender_id: meId, body, created_at: now, read_at: null, _pending: true };
+    const optimistic: PendingMsg = { id: tempId, sender_id: meId, body, created_at: now, read_at: null, _pending: true };
     setText("");
     setPendingMsgs((prev) => [...prev, optimistic]);
-    qc.setQueryData(["dm", threadId], (prev: any) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        msgs: [...(prev.msgs ?? []), optimistic],
-      };
-    });
+    justSentRef.current = true;
+    isNearBottomRef.current = true;
     qc.setQueryData(["dm-threads", meId], (prev: any) => Array.isArray(prev)
       ? prev.map((t: any) => t.id === threadId ? { ...t, last_message_at: now, last: { body, sender_id: meId, created_at: now } } : t)
       : prev);
-    const { data: saved, error } = await supabase
-      .from("dm_messages")
-      .insert({ thread_id: threadId, sender_id: meId, body })
-      .select("id,sender_id,body,created_at,read_at")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      setText(body);
-      setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
-      qc.setQueryData(["dm", threadId], (prev: any) => prev ? { ...prev, msgs: (prev.msgs ?? []).filter((m: any) => m.id !== tempId) } : prev);
+    if (!navigator.onLine) {
+      // Will auto-flush when the `online` event fires.
       return;
     }
-    setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
-    qc.setQueryData(["dm", threadId], (prev: any) => {
-      if (!prev) return prev;
-      const withoutTemp = (prev.msgs ?? []).filter((m: any) => m.id !== tempId);
-      if (saved && withoutTemp.some((m: any) => m.id === saved.id)) return { ...prev, msgs: withoutTemp };
-      return { ...prev, msgs: [...withoutTemp, saved ?? { ...optimistic, _pending: false }] };
-    });
-    await supabase
-      .from("dm_threads")
-      .update({ last_message_at: now })
-      .eq("id", threadId);
-    await markThreadRead();
+    await attemptSend(optimistic);
+  };
+
+  const retry = (id: string) => {
+    const p = pendingMsgs.find((m) => m.id === id);
+    if (!p) return;
+    justSentRef.current = true;
+    void attemptSend(p);
+  };
+
+  const discardPending = (id: string) => {
+    setPendingMsgs((prev) => prev.filter((m) => m.id !== id));
   };
 
   const remove = async (id: string) => {
@@ -761,7 +856,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/30 p-3 space-y-2">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto bg-muted/30 p-3 space-y-2">
         {visibleMsgs.length === 0 && (
           <p className="text-center text-xs text-muted-foreground py-8">No messages yet. Say hi 👋</p>
         )}
@@ -780,22 +875,34 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
                 <div
                   className={`px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap ${
                     mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-card border rounded-bl-sm"
-                  }`}
+                  } ${m._error ? "ring-2 ring-destructive/60" : ""} ${m._pending && !m._error ? "opacity-80" : ""}`}
                 >
                   {m.body}
                 </div>
                 <div className={`text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1 ${mine ? "justify-end" : ""}`}>
                   <span>{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</span>
                   {mine && (
-                    m.read_at ? (
-                      <CheckCheck className="w-3.5 h-3.5 text-primary" aria-label="Read" />
+                    m._error ? (
+                      <span className="flex items-center gap-1 text-destructive">
+                        <AlertCircle className="w-3 h-3" aria-label="Failed to send" />
+                        <button onClick={() => retry(m.id)} className="underline hover:no-underline inline-flex items-center gap-0.5">
+                          <RotateCw className="w-3 h-3" /> Retry
+                        </button>
+                        <button onClick={() => discardPending(m.id)} className="hover:text-foreground">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
                     ) : m._pending ? (
-                      <Check className="w-3 h-3 opacity-40" aria-label="Sending" />
+                      <span aria-label={navigator.onLine ? "Sending" : "Queued — will send when online"}>
+                        {navigator.onLine ? "Sending…" : "Queued"}
+                      </span>
+                    ) : m.read_at ? (
+                      <CheckCheck className="w-3.5 h-3.5 text-primary" aria-label="Read" />
                     ) : (
                       <CheckCheck className="w-3.5 h-3.5 opacity-50" aria-label="Delivered" />
                     )
                   )}
-                  {mine && !m._pending && (
+                  {mine && !m._pending && !m._error && (
                     <button onClick={() => remove(m.id)} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -806,6 +913,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
           );
         })}
       </div>
+
 
       {activeTypers.length > 0 && (
         <div className="px-3 pb-1 -mt-1 text-[11px] text-muted-foreground flex items-center gap-2 animate-fade-in">
