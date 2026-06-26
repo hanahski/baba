@@ -431,6 +431,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
   const { profile } = useAuth();
   const myName = profile?.display_name ?? "Student";
   const [text, setText] = useState("");
+  const [pendingMsgs, setPendingMsgs] = useState<any[]>([]);
   const [membersOpen, setMembersOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -596,6 +597,19 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
     [typers, data?.msgs.length],
   );
 
+  const visibleMsgs = useMemo(() => {
+    const saved = data?.msgs ?? [];
+    if (!pendingMsgs.length) return saved;
+    const savedIds = new Set(saved.map((m: any) => m.id));
+    return [...saved, ...pendingMsgs.filter((m) => !savedIds.has(m.id))].sort(
+      (a: any, b: any) => +new Date(a.created_at) - +new Date(b.created_at),
+    );
+  }, [data?.msgs, pendingMsgs]);
+
+  useEffect(() => {
+    setPendingMsgs([]);
+  }, [threadId]);
+
   // Re-mark as read whenever the message list grows while we're on this thread
   useEffect(() => {
     if (!data?.msgs.length) return;
@@ -605,31 +619,48 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [data?.msgs.length]);
+  }, [visibleMsgs.length]);
 
   const send = async () => {
     const body = text.trim();
     if (!body) return;
+    const now = new Date().toISOString();
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const optimistic = { id: tempId, sender_id: meId, body, created_at: now, read_at: null, _pending: true };
     setText("");
-    // Optimistic insert: show the message immediately in cache.
-    const tempId = `temp-${Date.now()}`;
+    setPendingMsgs((prev) => [...prev, optimistic]);
     qc.setQueryData(["dm", threadId], (prev: any) => {
       if (!prev) return prev;
       return {
         ...prev,
-        msgs: [...(prev.msgs ?? []), { id: tempId, sender_id: meId, body, created_at: new Date().toISOString(), read_at: null, _pending: true }],
+        msgs: [...(prev.msgs ?? []), optimistic],
       };
     });
-    const { error } = await supabase.from("dm_messages").insert({ thread_id: threadId, sender_id: meId, body });
+    qc.setQueryData(["dm-threads", meId], (prev: any) => Array.isArray(prev)
+      ? prev.map((t: any) => t.id === threadId ? { ...t, last_message_at: now, last: { body, sender_id: meId, created_at: now } } : t)
+      : prev);
+    const { data: saved, error } = await supabase
+      .from("dm_messages")
+      .insert({ thread_id: threadId, sender_id: meId, body })
+      .select("id,sender_id,body,created_at,read_at")
+      .single();
     if (error) {
       toast.error(error.message);
       setText(body);
+      setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
       qc.setQueryData(["dm", threadId], (prev: any) => prev ? { ...prev, msgs: (prev.msgs ?? []).filter((m: any) => m.id !== tempId) } : prev);
       return;
     }
+    setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
+    qc.setQueryData(["dm", threadId], (prev: any) => {
+      if (!prev) return prev;
+      const withoutTemp = (prev.msgs ?? []).filter((m: any) => m.id !== tempId);
+      if (saved && withoutTemp.some((m: any) => m.id === saved.id)) return { ...prev, msgs: withoutTemp };
+      return { ...prev, msgs: [...withoutTemp, saved ?? { ...optimistic, _pending: false }] };
+    });
     await supabase
       .from("dm_threads")
-      .update({ last_message_at: new Date().toISOString() })
+      .update({ last_message_at: now })
       .eq("id", threadId);
     await markThreadRead();
   };
@@ -731,10 +762,10 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
       )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/30 p-3 space-y-2">
-        {(data?.msgs ?? []).length === 0 && (
+        {visibleMsgs.length === 0 && (
           <p className="text-center text-xs text-muted-foreground py-8">No messages yet. Say hi 👋</p>
         )}
-        {(data?.msgs ?? []).map((m: any) => {
+        {visibleMsgs.map((m: any) => {
           const mine = m.sender_id === meId;
           const sender = isGroup ? senders.get(m.sender_id) : null;
           return (
@@ -764,7 +795,7 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
                       <CheckCheck className="w-3.5 h-3.5 opacity-50" aria-label="Delivered" />
                     )
                   )}
-                  {mine && (
+                  {mine && !m._pending && (
                     <button onClick={() => remove(m.id)} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
                       <Trash2 className="w-3 h-3" />
                     </button>
