@@ -643,14 +643,24 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
     const saved = data?.msgs ?? [];
     if (!pendingMsgs.length) return saved;
     const savedIds = new Set(saved.map((m: any) => m.id));
-    return [...saved, ...pendingMsgs.filter((m) => !savedIds.has(m.id))].sort(
+    // Dedupe: if a saved row matches a pending message (same sender, same body,
+    // within a 60s window), drop the pending so we don't double-render after
+    // the realtime INSERT lands before our insert call returns.
+    const matched = (p: PendingMsg) => saved.some((s: any) =>
+      s.sender_id === p.sender_id &&
+      s.body === p.body &&
+      Math.abs(+new Date(s.created_at) - +new Date(p.created_at)) < 60_000,
+    );
+    const stillPending = pendingMsgs.filter((m) => !savedIds.has(m.id) && !matched(m));
+    return [...saved, ...stillPending].sort(
       (a: any, b: any) => +new Date(a.created_at) - +new Date(b.created_at),
     );
   }, [data?.msgs, pendingMsgs]);
 
+  // Reload pending queue when switching threads.
   useEffect(() => {
-    setPendingMsgs([]);
-  }, [threadId]);
+    setPendingMsgs(loadPending(meId, threadId));
+  }, [threadId, meId]);
 
   // Re-mark as read whenever the message list grows while we're on this thread
   useEffect(() => {
@@ -658,53 +668,96 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
     void markThreadRead();
   }, [data?.msgs.length, markThreadRead]);
 
+  // Track whether the user is near the bottom — don't yank the view if
+  // they've scrolled up to read history.
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [visibleMsgs.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const last = visibleMsgs[visibleMsgs.length - 1] as any | undefined;
+    const lastIsMine = !!last && last.sender_id === meId;
+    if (justSentRef.current || isNearBottomRef.current || lastIsMine) {
+      el.scrollTo({ top: el.scrollHeight, behavior: justSentRef.current ? "auto" : "smooth" });
+      justSentRef.current = false;
+    }
+  }, [visibleMsgs.length, meId]);
+
+  // Try to actually persist a pending message to the DB. Marks _error on failure.
+  const attemptSend = useCallback(async (p: PendingMsg) => {
+    setPendingMsgs((prev) => prev.map((m) => m.id === p.id ? { ...m, _error: false } : m));
+    const { data: saved, error } = await supabase
+      .from("dm_messages")
+      .insert({ thread_id: threadId, sender_id: meId, body: p.body })
+      .select("id,sender_id,body,created_at,read_at")
+      .single();
+    if (error) {
+      setPendingMsgs((prev) => prev.map((m) => m.id === p.id ? { ...m, _error: true } : m));
+      if (navigator.onLine) toast.error(error.message);
+      return;
+    }
+    setPendingMsgs((prev) => prev.filter((m) => m.id !== p.id));
+    qc.setQueryData(["dm", threadId], (prev: any) => {
+      if (!prev) return prev;
+      const withoutTemp = (prev.msgs ?? []).filter((m: any) => m.id !== p.id);
+      if (saved && withoutTemp.some((m: any) => m.id === saved.id)) return { ...prev, msgs: withoutTemp };
+      return { ...prev, msgs: [...withoutTemp, saved] };
+    });
+    const ts = saved?.created_at ?? p.created_at;
+    qc.setQueryData(["dm-threads", meId], (prev: any) => Array.isArray(prev)
+      ? prev.map((t: any) => t.id === threadId ? { ...t, last_message_at: ts, last: { body: p.body, sender_id: meId, created_at: ts } } : t)
+      : prev);
+    void supabase.from("dm_threads").update({ last_message_at: ts }).eq("id", threadId);
+    void markThreadRead();
+  }, [meId, threadId, qc, markThreadRead]);
+
+  // Flush any queued messages when we come back online or the thread mounts.
+  useEffect(() => {
+    const flush = () => {
+      if (!navigator.onLine) return;
+      setPendingMsgs((prev) => {
+        for (const p of prev) void attemptSend(p);
+        return prev;
+      });
+    };
+    flush();
+    window.addEventListener("online", flush);
+    return () => window.removeEventListener("online", flush);
+  }, [attemptSend, threadId]);
 
   const send = async () => {
     const body = text.trim();
     if (!body) return;
     const now = new Date().toISOString();
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const optimistic = { id: tempId, sender_id: meId, body, created_at: now, read_at: null, _pending: true };
+    const optimistic: PendingMsg = { id: tempId, sender_id: meId, body, created_at: now, read_at: null, _pending: true };
     setText("");
     setPendingMsgs((prev) => [...prev, optimistic]);
-    qc.setQueryData(["dm", threadId], (prev: any) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        msgs: [...(prev.msgs ?? []), optimistic],
-      };
-    });
+    justSentRef.current = true;
+    isNearBottomRef.current = true;
     qc.setQueryData(["dm-threads", meId], (prev: any) => Array.isArray(prev)
       ? prev.map((t: any) => t.id === threadId ? { ...t, last_message_at: now, last: { body, sender_id: meId, created_at: now } } : t)
       : prev);
-    const { data: saved, error } = await supabase
-      .from("dm_messages")
-      .insert({ thread_id: threadId, sender_id: meId, body })
-      .select("id,sender_id,body,created_at,read_at")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      setText(body);
-      setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
-      qc.setQueryData(["dm", threadId], (prev: any) => prev ? { ...prev, msgs: (prev.msgs ?? []).filter((m: any) => m.id !== tempId) } : prev);
+    if (!navigator.onLine) {
+      // Will auto-flush when the `online` event fires.
       return;
     }
-    setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
-    qc.setQueryData(["dm", threadId], (prev: any) => {
-      if (!prev) return prev;
-      const withoutTemp = (prev.msgs ?? []).filter((m: any) => m.id !== tempId);
-      if (saved && withoutTemp.some((m: any) => m.id === saved.id)) return { ...prev, msgs: withoutTemp };
-      return { ...prev, msgs: [...withoutTemp, saved ?? { ...optimistic, _pending: false }] };
-    });
-    await supabase
-      .from("dm_threads")
-      .update({ last_message_at: now })
-      .eq("id", threadId);
-    await markThreadRead();
+    await attemptSend(optimistic);
+  };
+
+  const retry = (id: string) => {
+    const p = pendingMsgs.find((m) => m.id === id);
+    if (!p) return;
+    justSentRef.current = true;
+    void attemptSend(p);
+  };
+
+  const discardPending = (id: string) => {
+    setPendingMsgs((prev) => prev.filter((m) => m.id !== id));
   };
 
   const remove = async (id: string) => {
