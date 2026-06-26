@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import {
+  AlertCircle,
   ArrowLeft,
   Bell,
   BellOff,
@@ -19,6 +20,7 @@ import {
   MapPin,
   MessageCircle,
   MoreVertical,
+  RotateCw,
   Search,
   Send,
   Trash2,
