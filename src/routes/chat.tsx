@@ -51,6 +51,22 @@ function setDmNotifEnabled(on: boolean) {
   try { localStorage.setItem(DM_NOTIF_KEY, on ? "1" : "0"); } catch {}
 }
 
+type PendingMsg = { id: string; sender_id: string; body: string; created_at: string; read_at: null; _pending: true; _error?: boolean };
+const PENDING_KEY = (uid: string, tid: string) => `dm-pending:${uid}:${tid}`;
+function loadPending(meId: string, threadId: string): PendingMsg[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY(meId, threadId));
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function savePending(meId: string, threadId: string, list: PendingMsg[]) {
+  try {
+    if (list.length) localStorage.setItem(PENDING_KEY(meId, threadId), JSON.stringify(list));
+    else localStorage.removeItem(PENDING_KEY(meId, threadId));
+  } catch {}
+}
+
 type ChatSearch = { t?: string; tab?: "dms" | "campus" | "nearby"; newGroup?: boolean; groupName?: string };
 
 export const Route = createFileRoute("/chat")({
