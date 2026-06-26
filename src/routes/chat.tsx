@@ -579,6 +579,26 @@ function ThreadPane({ meId, threadId, onBack }: { meId: string; threadId: string
         { event: "*", schema: "public", table: "dm_thread_members", filter: `thread_id=eq.${threadId}` },
         () => qc.invalidateQueries({ queryKey: ["dm", threadId] }),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "dm_thread_reads", filter: `thread_id=eq.${threadId}` },
+        (payload) => {
+          // When the other party's read pointer advances, mark our sent messages
+          // as delivered/read instantly without waiting for a refetch.
+          const row: any = payload.new;
+          if (!row || row.user_id === meId) return;
+          const lastReadAt: string = row.last_read_at;
+          qc.setQueryData(["dm", threadId], (prev: any) => {
+            if (!prev) return prev;
+            const next = (prev.msgs ?? []).map((m: any) =>
+              m.sender_id === meId && !m.read_at && new Date(m.created_at) <= new Date(lastReadAt)
+                ? { ...m, read_at: lastReadAt }
+                : m,
+            );
+            return { ...prev, msgs: next };
+          });
+        },
+      )
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         const p = payload as { user_id?: string; name?: string } | undefined;
         if (!p?.user_id || p.user_id === meId) return;
