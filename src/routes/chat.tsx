@@ -296,36 +296,94 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
     }
   };
 
+  // Build a stable comma-joined thread-id list so the realtime channel filter
+  // scopes INSERT events to threads the user actually belongs to (avoids
+  // listening to every dm_messages row in the database).
+  const threadIdsKey = useMemo(
+    () => threads.map((t) => t.id).sort().join(","),
+    [threads],
+  );
+
   useEffect(() => {
+    const ids = threadIdsKey ? threadIdsKey.split(",") : [];
     const ch = supabase
       .channel(`dm-threads-${meId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, async (payload) => {
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
-        const row: any = payload.new;
-        if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
-          let senderName = "New message";
-          try {
-            const { data: p } = await supabase
-              .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
-            if (p?.display_name) senderName = p.display_name;
-          } catch {}
-          playOrNotify(
-            () => playNewMessageTone(),
-            { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
-          );
-        }
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
-      .subscribe();
+      );
+    if (ids.length) {
+      ch.on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "dm_messages",
+          filter: `thread_id=in.(${ids.join(",")})`,
+        },
+        async (payload) => {
+          qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
+          const row: any = payload.new;
+          if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
+            let senderName = "New message";
+            try {
+              const { data: p } = await supabase
+                .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
+              if (p?.display_name) senderName = p.display_name;
+            } catch {}
+            playOrNotify(
+              () => playNewMessageTone(),
+              { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
+            );
+          }
+        },
+      );
+    }
+    ch.on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
+      qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
+    ).subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [meId, qc]);
+  }, [meId, qc, threadIdsKey]);
+
+  // Periodically re-tick presence so "active now" badges expire/refresh
+  // every 30s without requiring user input.
+  const [, setPresenceTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPresenceTick((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Search filter for the conversation list.
+  const [search, setSearch] = useState("");
+  const visibleThreads = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return threads;
+    return threads.filter((t) => {
+      const title = t.is_group ? (t.name ?? "") : (t.other?.display_name ?? "");
+      return title.toLowerCase().includes(q);
+    });
+  }, [threads, search]);
+
+  // Active-Now strip: 1:1 partners who are online right now, dedup by user id.
+  const activeNow = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Array<{ threadId: string; userId: string; name: string; avatarKey: string | null; unread: number }> = [];
+    for (const t of threads) {
+      if (t.is_group || !t.other?.id) continue;
+      if (seen.has(t.other.id)) continue;
+      if (!isOnline(t.other.show_online, t.other.last_seen_at)) continue;
+      seen.add(t.other.id);
+      out.push({
+        threadId: t.id,
+        userId: t.other.id,
+        name: t.other.display_name ?? "Student",
+        avatarKey: t.other.avatar_key ?? null,
+        unread: t.unread ?? 0,
+      });
+    }
+    return out;
+  }, [threads]);
 
   const open = (id: string) => navigate({ to: "/chat", search: { tab: "dms", t: id } });
   const back = () => navigate({ to: "/chat", search: { tab: "dms" } });
