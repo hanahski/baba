@@ -330,6 +330,15 @@ function Home() {
               {!!filtered.length && (
                 <div className="space-y-4">
                   {filtered.map((p) => <PostCard key={p.id} post={p} locked={!user} />)}
+                  {canLoadMore && type === "all" && (
+                    <button
+                      onClick={() => setFeedLimit((n) => n + 20)}
+                      disabled={isFetching}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-sm font-semibold disabled:opacity-50"
+                    >
+                      {isFetching ? "Loading…" : "Load more posts"}
+                    </button>
+                  )}
                 </div>
               )}
               {!!sampleNotes?.length && (type === "all" || type === "past_question") && (
