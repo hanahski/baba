@@ -123,7 +123,7 @@ function Home() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, feedLimit]);
 
   const loadNew = () => {
     setPendingNew(0);
