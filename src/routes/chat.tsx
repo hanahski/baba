@@ -406,6 +406,44 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
             <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
           </div>
         </div>
+        {activeNow.length > 0 && (
+          <div className="px-3 py-2 border-b bg-muted/20">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Active Now
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {activeNow.map((u) => (
+                <button
+                  key={u.userId}
+                  onClick={() => open(u.threadId)}
+                  title={u.name}
+                  className="relative shrink-0 group"
+                >
+                  <AvatarDisplay avatarKey={u.avatarKey ?? "boy-1"} size={44} online />
+                  {u.unread > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold leading-none ring-2 ring-card">
+                      {u.unread > 9 ? "9+" : u.unread}
+                    </span>
+                  )}
+                  <span className="block text-[10px] mt-1 max-w-[52px] truncate text-center text-muted-foreground group-hover:text-foreground">
+                    {u.name.split(" ")[0]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="px-3 py-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search chats…"
+              className="h-8 pl-8 text-sm"
+            />
+          </div>
+        </div>
         <div className="flex-1 overflow-y-auto">
           <button
             onClick={() => open(PLUG_AI_THREAD_ID)}
