@@ -345,6 +345,7 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
         } as any);
       }
 
+      draft.clear();
       if (kind === "advert") {
         toast.success("Advert submitted — our team will review it shortly.");
         nav({ to: "/market" });
