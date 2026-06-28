@@ -23,6 +23,8 @@ import { generatePostImage } from "@/lib/generate-post-image.functions";
 import { AUDIO_ANIMATIONS, AudioAnimation, type AudioAnimationId } from "@/components/AudioAnimations";
 import { VideoTrimmer } from "@/components/VideoTrimmer";
 import { withTimeFragment, type TimeRange } from "@/lib/trim";
+import { useDraft } from "@/hooks/use-draft";
+
 
 
 export const Route = createFileRoute("/post/new")({
