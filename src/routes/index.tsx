@@ -75,15 +75,16 @@ function Home() {
   const { user } = useAuth();
   const [type, setType] = useState<string>("all");
   const [pendingNew, setPendingNew] = useState(0);
+  const [feedLimit, setFeedLimit] = useState(20);
   const qc = useQueryClient();
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ["feed"],
+  const { data: posts, isLoading, isFetching } = useQuery({
+    queryKey: ["feed", feedLimit],
     queryFn: async (): Promise<FeedPost[]> => {
       const { data, error } = await supabase
         .from("posts")
         .select("id,title,body,post_type,file_url,image_url,media_url,media_type,link_url,view_count,like_count,comment_count,repost_count,created_at,is_official, course:courses(code,title), author:profiles!posts_author_id_fkey(id,display_name,avatar_key,rank_tier,rank_step,show_online,last_seen_at,is_verified,is_legit,is_star,is_sure_plug)")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(feedLimit);
       if (error) throw error;
       return (data ?? []) as unknown as FeedPost[];
     },
@@ -92,6 +93,7 @@ function Home() {
     placeholderData: (prev) => prev,
     staleTime: 30_000,
   });
+  const canLoadMore = (posts?.length ?? 0) >= feedLimit;
 
 
   // Realtime: surface new + deleted posts without page refresh.
@@ -104,12 +106,12 @@ function Home() {
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, (payload: any) => {
         const id = payload.old?.id;
         if (!id) return;
-        qc.setQueryData<FeedPost[]>(["feed"], (prev) => (prev ?? []).filter((p) => p.id !== id));
+        qc.setQueryData<FeedPost[]>(["feed", feedLimit], (prev) => (prev ?? []).filter((p) => p.id !== id));
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, (payload: any) => {
         const n = payload.new;
         if (!n?.id) return;
-        qc.setQueryData<FeedPost[]>(["feed"], (prev) =>
+        qc.setQueryData<FeedPost[]>(["feed", feedLimit], (prev) =>
           (prev ?? []).map((p) => p.id === n.id ? {
             ...p,
             like_count: n.like_count ?? p.like_count,
@@ -121,7 +123,7 @@ function Home() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, feedLimit]);
 
   const loadNew = () => {
     setPendingNew(0);
@@ -328,6 +330,15 @@ function Home() {
               {!!filtered.length && (
                 <div className="space-y-4">
                   {filtered.map((p) => <PostCard key={p.id} post={p} locked={!user} />)}
+                  {canLoadMore && type === "all" && (
+                    <button
+                      onClick={() => setFeedLimit((n) => n + 20)}
+                      disabled={isFetching}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-sm font-semibold disabled:opacity-50"
+                    >
+                      {isFetching ? "Loading…" : "Load more posts"}
+                    </button>
+                  )}
                 </div>
               )}
               {!!sampleNotes?.length && (type === "all" || type === "past_question") && (

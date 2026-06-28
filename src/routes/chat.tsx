@@ -39,6 +39,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { RichText } from "@/components/RichText";
 import { playNewMessageTone } from "@/lib/sounds";
 import { playOrNotify, ensureNotificationPermission, notificationsGranted } from "@/lib/web-notify";
+import { isOnline } from "@/lib/presence";
 
 const PLUG_AI_THREAD_ID = "plug-ai";
 const PLUG_AI_STORAGE_KEY = (uid: string) => `plug-ai-msgs:${uid}`;
@@ -295,36 +296,94 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
     }
   };
 
+  // Build a stable comma-joined thread-id list so the realtime channel filter
+  // scopes INSERT events to threads the user actually belongs to (avoids
+  // listening to every dm_messages row in the database).
+  const threadIdsKey = useMemo(
+    () => threads.map((t) => t.id).sort().join(","),
+    [threads],
+  );
+
   useEffect(() => {
+    const ids = threadIdsKey ? threadIdsKey.split(",") : [];
     const ch = supabase
       .channel(`dm-threads-${meId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "dm_threads" }, () =>
         qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, async (payload) => {
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
-        const row: any = payload.new;
-        if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
-          let senderName = "New message";
-          try {
-            const { data: p } = await supabase
-              .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
-            if (p?.display_name) senderName = p.display_name;
-          } catch {}
-          playOrNotify(
-            () => playNewMessageTone(),
-            { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
-          );
-        }
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
-        qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
-      )
-      .subscribe();
+      );
+    if (ids.length) {
+      ch.on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "dm_messages",
+          filter: `thread_id=in.(${ids.join(",")})`,
+        },
+        async (payload) => {
+          qc.invalidateQueries({ queryKey: ["dm-threads", meId] });
+          const row: any = payload.new;
+          if (row?.sender_id && row.sender_id !== meId && notifOnRef.current) {
+            let senderName = "New message";
+            try {
+              const { data: p } = await supabase
+                .from("profiles").select("display_name").eq("id", row.sender_id).maybeSingle();
+              if (p?.display_name) senderName = p.display_name;
+            } catch {}
+            playOrNotify(
+              () => playNewMessageTone(),
+              { title: senderName, body: row.body ?? "Sent you a message", threadId: row.thread_id },
+            );
+          }
+        },
+      );
+    }
+    ch.on("postgres_changes", { event: "*", schema: "public", table: "dm_thread_members" }, () =>
+      qc.invalidateQueries({ queryKey: ["dm-threads", meId] }),
+    ).subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [meId, qc]);
+  }, [meId, qc, threadIdsKey]);
+
+  // Periodically re-tick presence so "active now" badges expire/refresh
+  // every 30s without requiring user input.
+  const [, setPresenceTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPresenceTick((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Search filter for the conversation list.
+  const [search, setSearch] = useState("");
+  const visibleThreads = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return threads;
+    return threads.filter((t) => {
+      const title = t.is_group ? (t.name ?? "") : (t.other?.display_name ?? "");
+      return title.toLowerCase().includes(q);
+    });
+  }, [threads, search]);
+
+  // Active-Now strip: 1:1 partners who are online right now, dedup by user id.
+  const activeNow = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Array<{ threadId: string; userId: string; name: string; avatarKey: string | null; unread: number }> = [];
+    for (const t of threads) {
+      if (t.is_group || !t.other?.id) continue;
+      if (seen.has(t.other.id)) continue;
+      if (!isOnline(t.other.show_online, t.other.last_seen_at)) continue;
+      seen.add(t.other.id);
+      out.push({
+        threadId: t.id,
+        userId: t.other.id,
+        name: t.other.display_name ?? "Student",
+        avatarKey: t.other.avatar_key ?? null,
+        unread: t.unread ?? 0,
+      });
+    }
+    return out;
+  }, [threads]);
 
   const open = (id: string) => navigate({ to: "/chat", search: { tab: "dms", t: id } });
   const back = () => navigate({ to: "/chat", search: { tab: "dms" } });
@@ -345,6 +404,44 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
               {notifOn ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4 text-destructive" />}
             </button>
             <NewChatButton meId={meId} onCreated={open} initialMode={initialNewGroup ? "group" : undefined} initialGroupName={initialGroupName} />
+          </div>
+        </div>
+        {activeNow.length > 0 && (
+          <div className="px-3 py-2 border-b bg-muted/20">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Active Now
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {activeNow.map((u) => (
+                <button
+                  key={u.userId}
+                  onClick={() => open(u.threadId)}
+                  title={u.name}
+                  className="relative shrink-0 group"
+                >
+                  <AvatarDisplay avatarKey={u.avatarKey ?? "boy-1"} size={44} online />
+                  {u.unread > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold leading-none ring-2 ring-card">
+                      {u.unread > 9 ? "9+" : u.unread}
+                    </span>
+                  )}
+                  <span className="block text-[10px] mt-1 max-w-[52px] truncate text-center text-muted-foreground group-hover:text-foreground">
+                    {u.name.split(" ")[0]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="px-3 py-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search chats…"
+              className="h-8 pl-8 text-sm"
+            />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -371,8 +468,12 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
             <p className="text-xs text-muted-foreground text-center px-4 py-8">
               No conversations yet. Tap <b>New</b> to start a chat or create a group.
             </p>
+          ) : visibleThreads.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center px-4 py-8">
+              No chats match "{search}".
+            </p>
           ) : (
-            threads.map((t) => {
+            visibleThreads.map((t) => {
               const isActive = t.id === activeThread;
               const preview = t.last?.body ?? "Say hi 👋";
               const mine = t.last?.sender_id === meId;

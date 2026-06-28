@@ -56,21 +56,23 @@ function MarketPage() {
     return () => clearTimeout(t);
   }, [q]);
   const [kind, setKind] = useState<string>("all");
+  const [showSold, setShowSold] = useState(false);
+  const [listingLimit, setListingLimit] = useState(30);
   const qc = useQueryClient();
   const getBooksFn = useServerFn(getLibraryBooks);
 
-  const { data: listings, isLoading } = useQuery({
-    queryKey: ["market", kind, debouncedQ],
+  const { data: listings, isLoading, isFetching } = useQuery({
+    queryKey: ["market", kind, debouncedQ, showSold, listingLimit],
     placeholderData: keepPreviousData,
     enabled: kind !== "books",
     queryFn: async () => {
       let query = supabase
         .from("market_listings")
         .select("*")
-        .eq("is_sold", false)
         .neq("listing_kind" as any, "advert")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(listingLimit);
+      if (!showSold) query = query.eq("is_sold", false);
       if (kind !== "all") query = query.eq("listing_kind" as any, kind);
       if (debouncedQ) {
         const like = `%${debouncedQ.replace(/[%,]/g, " ")}%`;
@@ -79,6 +81,7 @@ function MarketPage() {
       return (await query).data ?? [];
     },
   });
+  const canLoadMoreListings = (listings?.length ?? 0) >= listingLimit;
 
   const { data: books, isLoading: booksLoading } = useQuery({
     queryKey: ["market-books", debouncedQ],
@@ -199,7 +202,7 @@ function MarketPage() {
             })}
           </div>
 
-          <div className="mt-5 flex gap-2 flex-wrap">
+          <div className="mt-5 flex gap-2 flex-wrap items-center">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -209,6 +212,15 @@ function MarketPage() {
                 className="pl-9"
               />
             </div>
+            <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showSold}
+                onChange={(e) => setShowSold(e.target.checked)}
+                className="accent-primary"
+              />
+              Show sold
+            </label>
           </div>
           <div className="mt-3 flex gap-2 flex-wrap">
             {["all", ...KINDS.map((k) => k.key)].map((c) => (
@@ -414,6 +426,17 @@ function MarketPage() {
                 </Link>
               ))}
             </div>
+            {canLoadMoreListings && filtered.length > 0 && (
+              <div className="pt-2">
+                <button
+                  onClick={() => setListingLimit((n) => n + 30)}
+                  disabled={isFetching}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-sm font-semibold disabled:opacity-50"
+                >
+                  {isFetching ? "Loading…" : "Load more listings"}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
