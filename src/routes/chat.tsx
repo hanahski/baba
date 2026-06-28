@@ -39,6 +39,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { RichText } from "@/components/RichText";
 import { playNewMessageTone } from "@/lib/sounds";
 import { playOrNotify, ensureNotificationPermission, notificationsGranted } from "@/lib/web-notify";
+import { isOnline } from "@/lib/presence";
 
 const PLUG_AI_THREAD_ID = "plug-ai";
 const PLUG_AI_STORAGE_KEY = (uid: string) => `plug-ai-msgs:${uid}`;
