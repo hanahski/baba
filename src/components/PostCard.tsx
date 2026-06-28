@@ -128,25 +128,38 @@ export function PostCard({ post, locked }: { post: FeedPost; locked?: boolean })
   const toggleLike = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (!user) return requireAuth("Sign in to like posts");
-    if (liked) {
-      setLiked(false);
-      await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
-    } else {
-      setLiked(true);
-      const { error } = await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
-      if (error) setLiked(false);
+    // Optimistic toggle — flip UI immediately, roll back on error.
+    const wasLiked = liked;
+    const prevCount = likeCount;
+    setLiked(!wasLiked);
+    setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
+    const { error } = wasLiked
+      ? await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id)
+      : await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
+    if (error) {
+      setLiked(wasLiked);
+      setLikeCount(prevCount);
+      toast.error(wasLiked ? "Couldn't unlike" : "Couldn't like");
     }
   };
 
   const toggleRepost = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (!user) return requireAuth("Sign in to repost");
-    if (reposted) {
-      await supabase.from("post_reposts").delete().eq("post_id", post.id).eq("user_id", user.id);
-      setReposted(false); setRepostCount((c) => Math.max(0, c - 1));
-    } else {
-      const { error } = await supabase.from("post_reposts").insert({ post_id: post.id, user_id: user.id });
-      if (!error) { setReposted(true); setRepostCount((c) => c + 1); toast.success("Reposted"); }
+    // Optimistic toggle for reposts too.
+    const wasReposted = reposted;
+    const prevCount = repostCount;
+    setReposted(!wasReposted);
+    setRepostCount((c) => Math.max(0, c + (wasReposted ? -1 : 1)));
+    const { error } = wasReposted
+      ? await supabase.from("post_reposts").delete().eq("post_id", post.id).eq("user_id", user.id)
+      : await supabase.from("post_reposts").insert({ post_id: post.id, user_id: user.id });
+    if (error) {
+      setReposted(wasReposted);
+      setRepostCount(prevCount);
+      toast.error(wasReposted ? "Couldn't undo repost" : "Couldn't repost");
+    } else if (!wasReposted) {
+      toast.success("Reposted");
     }
   };
 
