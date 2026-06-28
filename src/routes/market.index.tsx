@@ -56,21 +56,23 @@ function MarketPage() {
     return () => clearTimeout(t);
   }, [q]);
   const [kind, setKind] = useState<string>("all");
+  const [showSold, setShowSold] = useState(false);
+  const [listingLimit, setListingLimit] = useState(30);
   const qc = useQueryClient();
   const getBooksFn = useServerFn(getLibraryBooks);
 
-  const { data: listings, isLoading } = useQuery({
-    queryKey: ["market", kind, debouncedQ],
+  const { data: listings, isLoading, isFetching } = useQuery({
+    queryKey: ["market", kind, debouncedQ, showSold, listingLimit],
     placeholderData: keepPreviousData,
     enabled: kind !== "books",
     queryFn: async () => {
       let query = supabase
         .from("market_listings")
         .select("*")
-        .eq("is_sold", false)
         .neq("listing_kind" as any, "advert")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(listingLimit);
+      if (!showSold) query = query.eq("is_sold", false);
       if (kind !== "all") query = query.eq("listing_kind" as any, kind);
       if (debouncedQ) {
         const like = `%${debouncedQ.replace(/[%,]/g, " ")}%`;
@@ -79,6 +81,7 @@ function MarketPage() {
       return (await query).data ?? [];
     },
   });
+  const canLoadMoreListings = (listings?.length ?? 0) >= listingLimit;
 
   const { data: books, isLoading: booksLoading } = useQuery({
     queryKey: ["market-books", debouncedQ],
