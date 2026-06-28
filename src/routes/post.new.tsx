@@ -243,6 +243,7 @@ function NewPostPage() {
       };
       const { data, error } = await supabase.from("posts").insert(payload).select("id").single();
       if (error) throw error;
+      draft.clear();
       toast.success("Posted! +1 to your rank progress");
       nav({ to: "/post/$id", params: { id: data.id } });
     } catch (err: any) {
