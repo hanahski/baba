@@ -468,8 +468,12 @@ function DmsView({ meId, activeThread, initialNewGroup, initialGroupName }: { me
             <p className="text-xs text-muted-foreground text-center px-4 py-8">
               No conversations yet. Tap <b>New</b> to start a chat or create a group.
             </p>
+          ) : visibleThreads.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center px-4 py-8">
+              No chats match "{search}".
+            </p>
           ) : (
-            threads.map((t) => {
+            visibleThreads.map((t) => {
               const isActive = t.id === activeThread;
               const preview = t.last?.body ?? "Say hi 👋";
               const mine = t.last?.sender_id === meId;
