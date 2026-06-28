@@ -299,6 +299,19 @@ function NewPostPage() {
           </div>
         )}
 
+        {draft.hasRestored && (
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border bg-primary/5 border-primary/30 p-3">
+            <div className="text-xs flex-1">
+              <p className="font-semibold">Draft restored</p>
+              <p className="text-muted-foreground">We brought back what you were writing before. Submit to publish, or clear to start over.</p>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { draft.clear(); setTitle(""); setBody(""); setType("general"); setCourseId(""); setLinkUrl(""); }}>
+              Clear
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={draft.dismissRestoredBanner}>Dismiss</Button>
+          </div>
+        )}
+
         <form onSubmit={submit} className="space-y-4">
           {/* SECTION 1 — Type + Course */}
           <section className="bg-card border rounded-2xl p-5 shadow-card space-y-4">
