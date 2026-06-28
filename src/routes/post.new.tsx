@@ -65,6 +65,32 @@ function NewPostPage() {
   const [enhanceImg, setEnhanceImg] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
 
+  // --- Draft persistence (survives tab reloads) ---
+  const draft = useDraft(
+    `post-new:${user?.id ?? "anon"}`,
+    { title: "", body: "", type: "general", courseId: "", linkUrl: "" },
+    { enabled: !!user?.id },
+  );
+  // Hydrate on first user-id ready
+  const draftHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!user?.id || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    const d = draft.value;
+    if (d.title && !title) setTitle(d.title);
+    if (d.body && !body) setBody(d.body);
+    if (d.type && d.type !== "general") setType(d.type);
+    if (d.courseId && !courseId) setCourseId(d.courseId);
+    if (d.linkUrl && !linkUrl) setLinkUrl(d.linkUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+  // Keep draft snapshot in sync
+  useEffect(() => {
+    if (!user?.id) return;
+    draft.setValue((v) => ({ ...v, title, body, type, courseId, linkUrl }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, body, type, courseId, linkUrl, user?.id]);
+
   const [videoTrim, setVideoTrim] = useState<TimeRange | null>(null);
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
