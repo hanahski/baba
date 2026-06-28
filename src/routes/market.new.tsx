@@ -379,6 +379,17 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
           </div>
         </header>
 
+        {draft.hasRestored && (
+          <div className="flex items-start gap-3 rounded-2xl border bg-primary/5 border-primary/30 p-3">
+            <div className="text-xs flex-1">
+              <p className="font-semibold">Draft restored</p>
+              <p className="text-muted-foreground">We brought back what you started before. Photos aren't saved — re-attach them if you need.</p>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { draft.clear(); setValues({}); }}>Clear</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={draft.dismissRestoredBanner}>Dismiss</Button>
+          </div>
+        )}
+
         <div className="bg-card border rounded-3xl p-6 shadow-card space-y-5">
           {fields.map((f) => (
             <div key={f.key}>
