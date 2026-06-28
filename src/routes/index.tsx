@@ -106,7 +106,7 @@ function Home() {
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, (payload: any) => {
         const id = payload.old?.id;
         if (!id) return;
-        qc.setQueryData<FeedPost[]>(["feed"], (prev) => (prev ?? []).filter((p) => p.id !== id));
+        qc.setQueryData<FeedPost[]>(["feed", feedLimit], (prev) => (prev ?? []).filter((p) => p.id !== id));
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, (payload: any) => {
         const n = payload.new;
