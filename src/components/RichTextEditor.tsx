@@ -80,7 +80,8 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 420 }
 
   return (
     <div className="border rounded-2xl overflow-hidden bg-background">
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/40 sticky top-14 z-10">
+      {/* Toolbar sits inside the editor (NOT sticky) so it never floats over the writing surface. */}
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/40">
         <Button type="button" size="icon" variant="ghost" onClick={() => exec("bold")} title="Bold"><Bold className="w-4 h-4" /></Button>
         <Button type="button" size="icon" variant="ghost" onClick={() => exec("italic")} title="Italic"><Italic className="w-4 h-4" /></Button>
         <Button type="button" size="icon" variant="ghost" onClick={() => exec("formatBlock", "<h1>")} title="Heading 1"><Heading1 className="w-4 h-4" /></Button>
@@ -101,7 +102,7 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 420 }
         suppressContentEditableWarning
         onInput={handleInput}
         data-placeholder={placeholder}
-        className="prose prose-sm dark:prose-invert max-w-none p-5 outline-none [&[data-placeholder]:empty::before]:content-[attr(data-placeholder)] [&[data-placeholder]:empty::before]:text-muted-foreground"
+        className="prose prose-sm dark:prose-invert max-w-none p-5 pt-6 outline-none [&[data-placeholder]:empty::before]:content-[attr(data-placeholder)] [&[data-placeholder]:empty::before]:text-muted-foreground"
         style={{ minHeight }}
       />
     </div>

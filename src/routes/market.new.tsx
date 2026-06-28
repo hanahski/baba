@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import {
   Package, Ticket, BookOpen, Megaphone, ArrowLeft, ArrowRight, Loader2, CheckCircle2, ImagePlus, X, Megaphone as Mega,
 } from "lucide-react";
+import { useDraft } from "@/hooks/use-draft";
 
 export const Route = createFileRoute("/market/new")({
   component: NewListing,
@@ -210,6 +211,27 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(false);
 
+  // Draft persistence (kind-scoped; photos are not persisted by design).
+  const draft = useDraft(
+    `market-new:${userId ?? "anon"}:${kind}`,
+    { values: {} as Record<string, any> },
+    { enabled: !!userId },
+  );
+  const draftHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!userId || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    if (draft.value.values && Object.keys(draft.value.values).length) {
+      setValues(draft.value.values);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    draft.setValue((v) => ({ ...v, values }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, userId]);
+
   const set = (k: string, v: any) => setValues((s) => ({ ...s, [k]: v }));
 
   const onPickPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,6 +345,7 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
         } as any);
       }
 
+      draft.clear();
       if (kind === "advert") {
         toast.success("Advert submitted — our team will review it shortly.");
         nav({ to: "/market" });
@@ -355,6 +378,17 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
             </div>
           </div>
         </header>
+
+        {draft.hasRestored && (
+          <div className="flex items-start gap-3 rounded-2xl border bg-primary/5 border-primary/30 p-3">
+            <div className="text-xs flex-1">
+              <p className="font-semibold">Draft restored</p>
+              <p className="text-muted-foreground">We brought back what you started before. Photos aren't saved — re-attach them if you need.</p>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { draft.clear(); setValues({}); }}>Clear</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={draft.dismissRestoredBanner}>Dismiss</Button>
+          </div>
+        )}
 
         <div className="bg-card border rounded-3xl p-6 shadow-card space-y-5">
           {fields.map((f) => (

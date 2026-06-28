@@ -45,6 +45,7 @@ import { Route as ToolsVocalSplitRouteImport } from './routes/tools.vocal-split'
 import { Route as ToolsVnum3RouteImport } from './routes/tools.vnum3'
 import { Route as ToolsVnum2RouteImport } from './routes/tools.vnum2'
 import { Route as ToolsVnum1RouteImport } from './routes/tools.vnum1'
+import { Route as ToolsQrGenerateRouteImport } from './routes/tools.qr-generate'
 import { Route as ToolsQrRouteImport } from './routes/tools.qr'
 import { Route as ToolsPlanetsRouteImport } from './routes/tools.planets'
 import { Route as ToolsPdfRouteImport } from './routes/tools.pdf'
@@ -275,6 +276,11 @@ const ToolsVnum2Route = ToolsVnum2RouteImport.update({
 const ToolsVnum1Route = ToolsVnum1RouteImport.update({
   id: '/vnum1',
   path: '/vnum1',
+  getParentRoute: () => ToolsRoute,
+} as any)
+const ToolsQrGenerateRoute = ToolsQrGenerateRouteImport.update({
+  id: '/qr-generate',
+  path: '/qr-generate',
   getParentRoute: () => ToolsRoute,
 } as any)
 const ToolsQrRoute = ToolsQrRouteImport.update({
@@ -602,6 +608,7 @@ export interface FileRoutesByFullPath {
   '/tools/pdf': typeof ToolsPdfRoute
   '/tools/planets': typeof ToolsPlanetsRoute
   '/tools/qr': typeof ToolsQrRoute
+  '/tools/qr-generate': typeof ToolsQrGenerateRoute
   '/tools/vnum1': typeof ToolsVnum1Route
   '/tools/vnum2': typeof ToolsVnum2Route
   '/tools/vnum3': typeof ToolsVnum3Route
@@ -689,6 +696,7 @@ export interface FileRoutesByTo {
   '/tools/pdf': typeof ToolsPdfRoute
   '/tools/planets': typeof ToolsPlanetsRoute
   '/tools/qr': typeof ToolsQrRoute
+  '/tools/qr-generate': typeof ToolsQrGenerateRoute
   '/tools/vnum1': typeof ToolsVnum1Route
   '/tools/vnum2': typeof ToolsVnum2Route
   '/tools/vnum3': typeof ToolsVnum3Route
@@ -779,6 +787,7 @@ export interface FileRoutesById {
   '/tools/pdf': typeof ToolsPdfRoute
   '/tools/planets': typeof ToolsPlanetsRoute
   '/tools/qr': typeof ToolsQrRoute
+  '/tools/qr-generate': typeof ToolsQrGenerateRoute
   '/tools/vnum1': typeof ToolsVnum1Route
   '/tools/vnum2': typeof ToolsVnum2Route
   '/tools/vnum3': typeof ToolsVnum3Route
@@ -870,6 +879,7 @@ export interface FileRouteTypes {
     | '/tools/pdf'
     | '/tools/planets'
     | '/tools/qr'
+    | '/tools/qr-generate'
     | '/tools/vnum1'
     | '/tools/vnum2'
     | '/tools/vnum3'
@@ -957,6 +967,7 @@ export interface FileRouteTypes {
     | '/tools/pdf'
     | '/tools/planets'
     | '/tools/qr'
+    | '/tools/qr-generate'
     | '/tools/vnum1'
     | '/tools/vnum2'
     | '/tools/vnum3'
@@ -1046,6 +1057,7 @@ export interface FileRouteTypes {
     | '/tools/pdf'
     | '/tools/planets'
     | '/tools/qr'
+    | '/tools/qr-generate'
     | '/tools/vnum1'
     | '/tools/vnum2'
     | '/tools/vnum3'
@@ -1392,6 +1404,13 @@ declare module '@tanstack/react-router' {
       path: '/vnum1'
       fullPath: '/tools/vnum1'
       preLoaderRoute: typeof ToolsVnum1RouteImport
+      parentRoute: typeof ToolsRoute
+    }
+    '/tools/qr-generate': {
+      id: '/tools/qr-generate'
+      path: '/qr-generate'
+      fullPath: '/tools/qr-generate'
+      preLoaderRoute: typeof ToolsQrGenerateRouteImport
       parentRoute: typeof ToolsRoute
     }
     '/tools/qr': {
@@ -1805,6 +1824,7 @@ interface ToolsRouteChildren {
   ToolsPdfRoute: typeof ToolsPdfRoute
   ToolsPlanetsRoute: typeof ToolsPlanetsRoute
   ToolsQrRoute: typeof ToolsQrRoute
+  ToolsQrGenerateRoute: typeof ToolsQrGenerateRoute
   ToolsVnum1Route: typeof ToolsVnum1Route
   ToolsVnum2Route: typeof ToolsVnum2Route
   ToolsVnum3Route: typeof ToolsVnum3Route
@@ -1823,6 +1843,7 @@ const ToolsRouteChildren: ToolsRouteChildren = {
   ToolsPdfRoute: ToolsPdfRoute,
   ToolsPlanetsRoute: ToolsPlanetsRoute,
   ToolsQrRoute: ToolsQrRoute,
+  ToolsQrGenerateRoute: ToolsQrGenerateRoute,
   ToolsVnum1Route: ToolsVnum1Route,
   ToolsVnum2Route: ToolsVnum2Route,
   ToolsVnum3Route: ToolsVnum3Route,
@@ -1915,13 +1936,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

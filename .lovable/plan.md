@@ -1,104 +1,84 @@
-# Native Google Sign-In for the StudentsPlug Android wrapper
+# Build plan — chat, feed, market, banners, book composer, admin, tools
 
-Goal: when the user taps "Continue with Google" inside the Android app, the **native** Google account picker opens (not the web OAuth popup). After the user picks an account, the resulting Google ID token is handed to the website, which signs the user into Supabase. Outside the app (regular browser), nothing changes.
-
----
-
-## How the handshake works
-
-```text
-[WebView] tap Google button
-   │  isInApp() === true  →  call AndroidApp.googleSignIn()
-   ▼
-[Android] Credential Manager / GoogleSignIn shows native picker
-   │  user picks account → Google returns an ID token (JWT)
-   ▼
-[Android] webView.evaluateJavascript(
-            "window.StudentsPlugApp.onGoogleIdToken('<idToken>')")
-   ▼
-[WebView] supabase.auth.signInWithIdToken({ provider:'google', token })
-   │  Supabase verifies the token with Google, creates a session
-   ▼
-[WebView] navigate to redirect target → user is signed in
-```
-
-The web Google web-OAuth popup is **never opened** in the app. Outside the app the existing `lovable.auth.signInWithOAuth("google", …)` flow keeps working.
+You selected all four batches. I'll ship them across **4 turns**, smallest-risk first, so each turn leaves the app in a working state. After each turn I'll confirm before moving to the next.
 
 ---
 
-## Web-side changes
+## Turn 1 — Quick wins (small, low risk)
 
-### 1. `src/lib/app-bridge.ts`
-Extend the bridge contract:
+**Goal:** ship visible fixes immediately so the rest is built on a clean base.
 
-- Add to `AndroidBridge`:
-  - `googleSignIn?: () => void` — fire-and-forget; result arrives via `onGoogleIdToken`.
-  - `googleSignOut?: () => void` — clears the native cached account.
-- Add to `window.StudentsPlugApp`:
-  - `onGoogleIdToken(token: string)` — invoked by Java after a successful pick.
-  - `onGoogleSignInError(message: string)` — invoked on cancel/error.
-- New helpers:
-  - `requestNativeGoogleSignIn(): Promise<string>` — resolves with the ID token, rejects on error/cancel. Internally calls `AndroidApp.googleSignIn()` and waits for the next `onGoogleIdToken` / `onGoogleSignInError` event (with a timeout).
-  - `supportsNativeGoogle()` — true only when `isInApp() && typeof window.AndroidApp?.googleSignIn === "function"`.
-
-### 2. `src/routes/login.tsx`
-Rewrite the `google` handler:
-
-- If `supportsNativeGoogle()`:
-  1. `const idToken = await requestNativeGoogleSignIn();`
-  2. `await supabase.auth.signInWithIdToken({ provider: "google", token: idToken });`
-  3. On success, navigate to `redirect`.
-  4. On error, `toast.error(...)`.
-- Else: keep current `lovable.auth.signInWithOAuth("google", …)` path.
-
-Also hide the "blocked inside the preview frame" amber notice when `isInApp()` is true (it's irrelevant there), and keep the Google button visible (the app uses it — it just routes natively).
-
-No other auth code, no new server functions, no Supabase migration. `signInWithIdToken` is already enabled for Google in Lovable Cloud's managed auth.
+- **Book composer toolbar fix** — `RichTextEditor` toolbar currently floats over the first lines of the chapter. Make it sticky inside its own container with proper top padding so text is never obscured.
+- **`/tools/qr-generate`** — new route. Tabs for URL / Text / WiFi / vCard. 10 design templates (classic, rounded, dots, dots-rounded, framed, gradient-blue, gradient-sunset, mono-dark, mono-light, logo-center). Download as PNG/SVG. Pure client-side via `qrcode` lib — no credits, no backend.
+- **`useDraft` hook** + restore banner on post composer and market new-listing form (localStorage, survives reload).
+- Fix runtime error: dynamic-import failure on `virtual:tanstack-start-client-entry` (stale dev chunk after recent edits).
 
 ---
 
-## Android-side changes (you paste this into Sketchware)
+## Turn 2 — Chat + Feed + Market upgrades
 
-These edits are to the files you uploaded (`MainActivity (18) (3).java`, `activity_main (4).xml`). I'll hand you the patched Java file ready to paste — XML stays the same.
+**Chat**
+- Active Now strip above DMs: horizontal avatars of online students who share a thread with you, with unread badge dot, search input, 30s presence re-tick (`setInterval` invalidating presence query), dedup by user id.
+- Verify presence heartbeat in `src/lib/auth.tsx` writes `last_seen_at` every 60s + on focus + on visibility change (already present — audit only).
+- Realtime DM channel: filter `postgres_changes` on `dm_messages` by `thread_id=in.(...your thread ids)` instead of subscribing globally.
 
-### `MainActivity.java`
-1. **Add Credential Manager (Google ID) wiring.** Use `androidx.credentials.CredentialManager` + `com.google.android.libraries.identity.googleid.GetGoogleIdOption` (modern, replaces deprecated GoogleSignIn). Required Gradle deps (Sketchware "local libraries"):
-   - `androidx.credentials:credentials:1.3.0`
-   - `androidx.credentials:credentials-play-services-auth:1.3.0`
-   - `com.google.android.libraries.identity.googleid:googleid:1.1.1`
-2. **Constant** `WEB_CLIENT_ID` — the **Web** OAuth client ID from Google Cloud (the same one Supabase Auth → Google uses as "Client ID"). Required so the returned ID token's `aud` matches what Supabase expects. *You'll need to give me this value, or paste it into the file yourself.*
-3. **New `@JavascriptInterface` methods on the `AndroidApp` bridge:**
-   - `googleSignIn()` — launches `CredentialManager.getCredential(...)` with the Google ID option (`setFilterByAuthorizedAccounts(false)`, `setAutoSelectEnabled(false)`, `setServerClientId(WEB_CLIENT_ID)`, fresh nonce per request). On success, calls `webView.evaluateJavascript("window.StudentsPlugApp.onGoogleIdToken('…')", null)`. On `GetCredentialException`/cancel, calls `window.StudentsPlugApp.onGoogleSignInError('…')`.
-   - `googleSignOut()` — `CredentialManager.clearCredentialState(...)` so the next sign-in re-prompts the picker.
-4. Properly escape the token for the JS string literal (it's a JWT — safe charset, but still wrap in `JSON.stringify` via a small helper to be safe).
-5. Bump the UA tag to `StudentsPlugApp/2.1` so the web side can require `>= 2.1` before assuming native Google is available (forward-compatible).
+**Feed**
+- Optimistic likes & reposts: `useMutation` with `onMutate` toggling cache, `onError` rollback.
+- "Load more posts": cursor pagination using `created_at` + `id`, 20 per page.
 
-### `activity_main.xml`
-No change required.
-
-### Google Cloud Console (one-time, done by you)
-- In the existing OAuth consent screen, add an **Android** OAuth client:
-  - Package name: `com.studentsplug.app`
-  - SHA-1: the signing cert SHA-1 of the APK Sketchware produces (debug + release). You can get it with `keytool -list -v -keystore <your.keystore>`.
-- Keep the existing **Web** OAuth client (used by Supabase) — its client ID is what we hard-code into `MainActivity` as `WEB_CLIENT_ID`.
-- No redirect URI changes needed; native flow doesn't use one.
+**Market**
+- "Load more listings": same cursor pattern.
+- Sold-listing filter toggle (default hides sold).
+- Draft persistence on new-listing form via `useDraft`.
 
 ---
 
-## What you'll see after this lands
+## Turn 3 — Banners composer + analytics
 
-- **In a normal browser:** Google button → web popup (unchanged).
-- **In the app:** Google button → native Android account chooser → app continues signed in. No web popup ever appears. No "open in new tab" notice.
-- The website itself still exposes Google sign-in on the public site for desktop/mobile-browser users — only the *in-app* path is rerouted.
+- New `/admin/banners` editor: WhatsApp-style preview with 6 layouts (image-left, image-right, image-top, image-bg, text-only, split). Drag-drop image upload to `banners` bucket, accent color picker, light/dark variants.
+- Schema additions to `banner_slides`: `publish_at`, `expire_at`, `layout`, `accent`, `variant`, `sort_idx`.
+- Scheduled publish + auto-expire (filter on `home` query: `publish_at <= now() AND (expire_at IS NULL OR expire_at > now())`).
+- Autosave drafts + 30-step undo/redo (in-memory stack).
+- Drag-and-drop ordering (`@dnd-kit/sortable` — already in deps if present, else add).
+- New table `banner_events(id, banner_id, kind impressions|clicks, user_id?, at)`. CTR computed in admin panel. Frontend logs impression on first view + click on tap.
 
 ---
 
-## What I need from you before I can build
+## Turn 4 — Book composer full pack + Admin + Tools
 
-1. The **Web OAuth Client ID** that Supabase Google provider is configured with (looks like `xxxxxxxx.apps.googleusercontent.com`). I'll inline it into `MainActivity.java` as `WEB_CLIENT_ID`.
-2. Confirmation you can add those three `androidx.credentials` / `googleid` libraries in Sketchware (they're required — no Credential Manager, no native picker).
-3. Confirmation you've registered the Android OAuth client in Google Cloud with the app's package name + SHA-1 (otherwise Google will reject the request with `developer error`).
+**Book Composer**
+- AI cover generation (Lovable AI image gateway, credit-gated via `spend_credits`).
+- AI inline images via slash command.
+- AI writing assistant: continue / rewrite / expand / shorten / grammar (Lovable AI `google/gemini-3-flash-preview`).
+- Drag-reorder chapters (`@dnd-kit`), persist `idx`.
+- EPUB export (`epub-gen-memory`) + PDF export (`jspdf` + `html2canvas` per chapter).
+- Word count + reading time in sidebar.
+- 6 cover templates (gradient + title typography presets, render to canvas).
+- Find & replace dialog across chapters.
+- Auto TOC generator (insert chapter list with anchors at chapter 0).
+- Publish preview dialog (renders read view in modal before publish).
+- Collaborator share link → new public route `/books/preview/$token`, new column `user_books.share_token`.
+- Per-chapter undo/redo via Tiptap history (already built-in — wire Ctrl+Z properly).
 
-Once I have #1 (and you've done #2/#3), I'll:
-- Update `src/lib/app-bridge.ts` and `src/routes/login.tsx`.
-- Hand you the full patched `MainActivity.java` ready to paste into Sketchware.
+**Admin**
+- `/admin-login` staff page (email/password gated, redirects to `/admin` if `has_role('admin')`).
+- Tool Editor "Test API" button — calls the override endpoint with sample params and shows raw response.
+- Tool Prices admin panel reads/writes `tool_prices` table.
+- Pre-seed RapidAPI overrides via migration insert.
+- Smarter `aiParseToolSnippet`: detect `{{placeholder}}` and map to action params.
+
+---
+
+## Technical notes
+
+- **Schema migrations** are batched per turn — I won't issue ad-hoc DDL during component work.
+- **Realtime cost**: scoping DM channel by thread ids prevents fanout to every signed-in user.
+- **Credit gating**: AI image + AI writing call `spend_credits` server-side before invoking the gateway; UI shows the cost up-front.
+- **Storage**: book-covers, banners, post-* buckets already exist — no new buckets needed except possibly `book-exports` for EPUB/PDF (or stream as download blob, no bucket required — preferred).
+- **Backwards compatibility**: every new column is nullable or has a default; no existing row breaks.
+
+---
+
+## What I need from you
+
+Reply **"go"** and I'll start Turn 1 immediately. If you want me to reorder (e.g. banners before chat), say so now.

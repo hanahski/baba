@@ -23,6 +23,8 @@ import { generatePostImage } from "@/lib/generate-post-image.functions";
 import { AUDIO_ANIMATIONS, AudioAnimation, type AudioAnimationId } from "@/components/AudioAnimations";
 import { VideoTrimmer } from "@/components/VideoTrimmer";
 import { withTimeFragment, type TimeRange } from "@/lib/trim";
+import { useDraft } from "@/hooks/use-draft";
+
 
 
 export const Route = createFileRoute("/post/new")({
@@ -62,6 +64,32 @@ function NewPostPage() {
   const [audioAnim, setAudioAnim] = useState<AudioAnimationId>("dance");
   const [enhanceImg, setEnhanceImg] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+
+  // --- Draft persistence (survives tab reloads) ---
+  const draft = useDraft(
+    `post-new:${user?.id ?? "anon"}`,
+    { title: "", body: "", type: "general", courseId: "", linkUrl: "" },
+    { enabled: !!user?.id },
+  );
+  // Hydrate on first user-id ready
+  const draftHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!user?.id || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    const d = draft.value;
+    if (d.title && !title) setTitle(d.title);
+    if (d.body && !body) setBody(d.body);
+    if (d.type && d.type !== "general") setType(d.type);
+    if (d.courseId && !courseId) setCourseId(d.courseId);
+    if (d.linkUrl && !linkUrl) setLinkUrl(d.linkUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+  // Keep draft snapshot in sync
+  useEffect(() => {
+    if (!user?.id) return;
+    draft.setValue((v) => ({ ...v, title, body, type, courseId, linkUrl }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, body, type, courseId, linkUrl, user?.id]);
 
   const [videoTrim, setVideoTrim] = useState<TimeRange | null>(null);
   const [busy, setBusy] = useState(false);
@@ -215,6 +243,7 @@ function NewPostPage() {
       };
       const { data, error } = await supabase.from("posts").insert(payload).select("id").single();
       if (error) throw error;
+      draft.clear();
       toast.success("Posted! +1 to your rank progress");
       nav({ to: "/post/$id", params: { id: data.id } });
     } catch (err: any) {
@@ -267,6 +296,19 @@ function NewPostPage() {
                 <ShieldCheck className="w-4 h-4 mr-1.5" />Verify now
               </Button>
             </div>
+          </div>
+        )}
+
+        {draft.hasRestored && (
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border bg-primary/5 border-primary/30 p-3">
+            <div className="text-xs flex-1">
+              <p className="font-semibold">Draft restored</p>
+              <p className="text-muted-foreground">We brought back what you were writing before. Submit to publish, or clear to start over.</p>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { draft.clear(); setTitle(""); setBody(""); setType("general"); setCourseId(""); setLinkUrl(""); }}>
+              Clear
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={draft.dismissRestoredBanner}>Dismiss</Button>
           </div>
         )}
 
