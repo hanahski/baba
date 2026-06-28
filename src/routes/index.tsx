@@ -111,7 +111,7 @@ function Home() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, (payload: any) => {
         const n = payload.new;
         if (!n?.id) return;
-        qc.setQueryData<FeedPost[]>(["feed"], (prev) =>
+        qc.setQueryData<FeedPost[]>(["feed", feedLimit], (prev) =>
           (prev ?? []).map((p) => p.id === n.id ? {
             ...p,
             like_count: n.like_count ?? p.like_count,
