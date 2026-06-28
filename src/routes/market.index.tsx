@@ -202,7 +202,7 @@ function MarketPage() {
             })}
           </div>
 
-          <div className="mt-5 flex gap-2 flex-wrap">
+          <div className="mt-5 flex gap-2 flex-wrap items-center">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -212,6 +212,15 @@ function MarketPage() {
                 className="pl-9"
               />
             </div>
+            <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showSold}
+                onChange={(e) => setShowSold(e.target.checked)}
+                className="accent-primary"
+              />
+              Show sold
+            </label>
           </div>
           <div className="mt-3 flex gap-2 flex-wrap">
             {["all", ...KINDS.map((k) => k.key)].map((c) => (
