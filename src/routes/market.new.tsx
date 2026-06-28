@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import {
   Package, Ticket, BookOpen, Megaphone, ArrowLeft, ArrowRight, Loader2, CheckCircle2, ImagePlus, X, Megaphone as Mega,
 } from "lucide-react";
+import { useDraft } from "@/hooks/use-draft";
 
 export const Route = createFileRoute("/market/new")({
   component: NewListing,
