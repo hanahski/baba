@@ -211,6 +211,27 @@ function ComposerForm({ kind, onBack, userId }: { kind: Kind; onBack: () => void
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(false);
 
+  // Draft persistence (kind-scoped; photos are not persisted by design).
+  const draft = useDraft(
+    `market-new:${userId ?? "anon"}:${kind}`,
+    { values: {} as Record<string, any> },
+    { enabled: !!userId },
+  );
+  const draftHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!userId || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    if (draft.value.values && Object.keys(draft.value.values).length) {
+      setValues(draft.value.values);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    draft.setValue((v) => ({ ...v, values }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, userId]);
+
   const set = (k: string, v: any) => setValues((s) => ({ ...s, [k]: v }));
 
   const onPickPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
