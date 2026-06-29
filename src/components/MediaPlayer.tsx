@@ -10,6 +10,18 @@ import { AudioAnimation, type AudioAnimationId } from "./AudioAnimations";
 import { getSocialEmbed } from "@/lib/video-embed";
 import { AvatarVisualizer } from "./AvatarVisualizer";
 import { parseTimeFragment } from "@/lib/trim";
+import { resolveStorageUrl } from "@/lib/storage-url";
+
+/** Resolve a possibly-private Supabase storage URL to a signed URL once. */
+function useResolvedUrl(url: string): string | null {
+  const [resolved, setResolved] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    resolveStorageUrl(url).then((u) => { if (alive) setResolved(u ?? url); });
+    return () => { alive = false; };
+  }, [url]);
+  return resolved;
+}
 
 /**
  * Lazy-mount a <video> only when it scrolls near the viewport. Cuts feed
@@ -299,7 +311,9 @@ function isNativeFile(url: string) {
   return /\.(mp4|webm|mov|mkv|avi|mp3|wav|m4a|ogg|aac|flac)(\?|$)/i.test(url);
 }
 
-export function MediaPlayer({ url, type, title, avatarKey }: Props) {
+export function MediaPlayer({ url: rawUrl, type, title, avatarKey }: Props) {
+  const resolved = useResolvedUrl(rawUrl);
+  const url = resolved ?? rawUrl;
   const kind = detectType(url, type);
   const playerId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -308,7 +322,12 @@ export function MediaPlayer({ url, type, title, avatarKey }: Props) {
   useSinglePlayback(audioRef as React.RefObject<HTMLMediaElement>, playerId);
   const embed = useEmbedSingle(playerId);
 
+  if (!resolved) {
+    return <div className="w-full aspect-video rounded-2xl bg-muted animate-pulse" aria-hidden />;
+  }
+
   if (kind === "image") {
+
     return (
       <img
         src={url}
