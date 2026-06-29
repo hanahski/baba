@@ -10,6 +10,18 @@ import { AudioAnimation, type AudioAnimationId } from "./AudioAnimations";
 import { getSocialEmbed } from "@/lib/video-embed";
 import { AvatarVisualizer } from "./AvatarVisualizer";
 import { parseTimeFragment } from "@/lib/trim";
+import { resolveStorageUrl } from "@/lib/storage-url";
+
+/** Resolve a possibly-private Supabase storage URL to a signed URL once. */
+function useResolvedUrl(url: string): string | null {
+  const [resolved, setResolved] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    resolveStorageUrl(url).then((u) => { if (alive) setResolved(u ?? url); });
+    return () => { alive = false; };
+  }, [url]);
+  return resolved;
+}
 
 /**
  * Lazy-mount a <video> only when it scrolls near the viewport. Cuts feed
