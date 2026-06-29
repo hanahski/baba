@@ -160,39 +160,86 @@ export type Database = {
         }
         Relationships: []
       }
+      banner_events: {
+        Row: {
+          at: string
+          banner_id: string
+          id: string
+          kind: string
+          user_id: string | null
+        }
+        Insert: {
+          at?: string
+          banner_id: string
+          id?: string
+          kind: string
+          user_id?: string | null
+        }
+        Update: {
+          at?: string
+          banner_id?: string
+          id?: string
+          kind?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_events_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "banner_slides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banner_slides: {
         Row: {
+          accent: string | null
           created_at: string
           cta_label: string | null
+          expire_at: string | null
           id: string
           image_url: string | null
           is_active: boolean
+          layout: string
           link_url: string | null
+          publish_at: string | null
           sort_order: number
           subtitle: string | null
           title: string
+          variant: string
         }
         Insert: {
+          accent?: string | null
           created_at?: string
           cta_label?: string | null
+          expire_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          layout?: string
           link_url?: string | null
+          publish_at?: string | null
           sort_order?: number
           subtitle?: string | null
           title: string
+          variant?: string
         }
         Update: {
+          accent?: string | null
           created_at?: string
           cta_label?: string | null
+          expire_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          layout?: string
           link_url?: string | null
+          publish_at?: string | null
           sort_order?: number
           subtitle?: string | null
           title?: string
+          variant?: string
         }
         Relationships: []
       }

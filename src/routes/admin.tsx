@@ -412,6 +412,17 @@ function buildLinkUrl(kind: LinkKind, value: string): string {
   return opt?.prefix ? `${opt.prefix}${v}` : v;
 }
 
+type BannerLayout = "image-bg" | "image-left" | "image-right" | "image-top" | "text-only" | "split";
+type BannerVariant = "auto" | "light" | "dark";
+const LAYOUT_OPTIONS: { v: BannerLayout; label: string }[] = [
+  { v: "image-bg", label: "Image background" },
+  { v: "image-top", label: "Image on top" },
+  { v: "image-left", label: "Image left" },
+  { v: "image-right", label: "Image right" },
+  { v: "split", label: "Split diagonal" },
+  { v: "text-only", label: "Text only" },
+];
+
 function AdminBanners() {
   const { data, refetch } = useQuery({
     queryKey: ["admin-banners"],
@@ -420,6 +431,24 @@ function AdminBanners() {
       return resolveBannerUrls(rows as any[]);
     },
   });
+
+  // CTR analytics
+  const { data: ctr } = useQuery({
+    queryKey: ["admin-banner-ctr"],
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("banner_events").select("banner_id, kind");
+      const map = new Map<string, { impressions: number; clicks: number }>();
+      (data ?? []).forEach((e: any) => {
+        const m = map.get(e.banner_id) ?? { impressions: 0, clicks: 0 };
+        if (e.kind === "impression") m.impressions++;
+        else if (e.kind === "click") m.clicks++;
+        map.set(e.banner_id, m);
+      });
+      return map;
+    },
+  });
+
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -429,6 +458,11 @@ function AdminBanners() {
   const [ctaLabel, setCtaLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [previewRatio, setPreviewRatio] = useState<number | null>(null);
+  const [layout, setLayout] = useState<BannerLayout>("image-bg");
+  const [accent, setAccent] = useState("#0ea5e9");
+  const [variant, setVariant] = useState<BannerVariant>("auto");
+  const [publishAt, setPublishAt] = useState("");
+  const [expireAt, setExpireAt] = useState("");
 
   const onPickFile = async (file: File | null) => {
     if (!file) return;
@@ -454,21 +488,28 @@ function AdminBanners() {
   const linkOpt = LINK_KIND_OPTIONS.find((o) => o.value === linkKind)!;
 
   const add = async () => {
-    if (!title || !imageUrl) return toast.error("Title and image required");
+    if (!title) return toast.error("Title required");
+    if (layout !== "text-only" && !imageUrl) return toast.error("Image required for this layout");
     const stored = imagePath || imageUrl;
     const { error } = await supabase.from("banner_slides").insert({
       title,
       subtitle,
-      image_url: stored,
+      image_url: stored || null,
       link_url: finalLinkUrl || null,
       cta_label: ctaLabel.trim() || null,
+      layout,
+      accent: accent || null,
+      variant,
+      publish_at: publishAt ? new Date(publishAt).toISOString() : null,
+      expire_at: expireAt ? new Date(expireAt).toISOString() : null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Banner added");
       setTitle(""); setSubtitle(""); setImageUrl(""); setImagePath("");
       setLinkKind("none"); setLinkValue(""); setCtaLabel("");
-      setPreviewRatio(null);
+      setPreviewRatio(null); setLayout("image-bg"); setVariant("auto");
+      setPublishAt(""); setExpireAt("");
       refetch();
     }
   };
@@ -481,6 +522,17 @@ function AdminBanners() {
     await supabase.from("banner_slides").delete().eq("id", id);
     refetch();
   };
+  const move = async (idx: number, dir: -1 | 1) => {
+    const list = (data ?? []) as any[];
+    const j = idx + dir;
+    if (j < 0 || j >= list.length) return;
+    const a = list[idx], b = list[j];
+    await Promise.all([
+      supabase.from("banner_slides").update({ sort_order: b.sort_order }).eq("id", a.id),
+      supabase.from("banner_slides").update({ sort_order: a.sort_order }).eq("id", b.id),
+    ]);
+    refetch();
+  };
 
   return (
     <div className="space-y-4">
@@ -488,6 +540,39 @@ function AdminBanners() {
         <h3 className="font-semibold">Add new banner</h3>
         <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
         <Input placeholder="Subtitle (optional)" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Layout</label>
+          <select value={layout} onChange={(e) => setLayout(e.target.value as BannerLayout)} className="w-full h-10 px-3 rounded-md border bg-background text-sm">
+            {LAYOUT_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-sm font-medium mb-1">Accent colour</label>
+            <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-10 w-full rounded-md border bg-background" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Text theme</label>
+            <select value={variant} onChange={(e) => setVariant(e.target.value as BannerVariant)} className="w-full h-10 px-3 rounded-md border bg-background text-sm">
+              <option value="auto">Auto</option>
+              <option value="light">Light text</option>
+              <option value="dark">Dark text</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-sm font-medium mb-1">Publish at (optional)</label>
+            <input type="datetime-local" value={publishAt} onChange={(e) => setPublishAt(e.target.value)} className="w-full h-10 px-3 rounded-md border bg-background text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Expire at (optional)</label>
+            <input type="datetime-local" value={expireAt} onChange={(e) => setExpireAt(e.target.value)} className="w-full h-10 px-3 rounded-md border bg-background text-sm" />
+          </div>
+        </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Banner image</label>
@@ -546,30 +631,46 @@ function AdminBanners() {
           )}
         </div>
 
-        <Button onClick={add} disabled={uploading || !title || !imageUrl}>Add banner</Button>
+        <Button onClick={add} disabled={uploading || !title}>Add banner</Button>
       </div>
 
       <div className="space-y-2">
-        {(data ?? []).map((b: any) => (
-          <div key={b.id} className="bg-card border rounded-2xl p-3 flex items-center gap-3">
-            <img src={b.image_url} alt={b.title} className="w-16 h-16 object-cover rounded-xl" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium line-clamp-1">{b.title}</p>
-              <p className="text-xs text-muted-foreground line-clamp-1">{b.subtitle ?? ""}</p>
-              {b.link_url && (
-                <p className="text-[11px] text-primary line-clamp-1 break-all">
-                  → {b.cta_label ? `[${b.cta_label}] ` : ""}{b.link_url}
-                </p>
+        {(data ?? []).map((b: any, idx: number) => {
+          const stats = ctr?.get(b.id);
+          const imp = stats?.impressions ?? 0;
+          const clk = stats?.clicks ?? 0;
+          const rate = imp > 0 ? ((clk / imp) * 100).toFixed(1) : "0.0";
+          return (
+            <div key={b.id} className="bg-card border rounded-2xl p-3 flex items-center gap-3">
+              {b.image_url ? (
+                <img src={b.image_url} alt={b.title} className="w-16 h-16 object-cover rounded-xl" />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">text</div>
               )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium line-clamp-1">{b.title}</p>
+                <p className="text-xs text-muted-foreground line-clamp-1">{b.subtitle ?? ""}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {b.layout ?? "image-bg"} · {b.variant ?? "auto"}
+                  {b.publish_at && ` · from ${new Date(b.publish_at).toLocaleDateString()}`}
+                  {b.expire_at && ` · until ${new Date(b.expire_at).toLocaleDateString()}`}
+                </p>
+                <p className="text-[11px] text-primary">{imp} impressions · {clk} clicks · {rate}% CTR</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => move(idx, -1)} disabled={idx === 0}>↑</Button>
+                <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => move(idx, 1)} disabled={idx === (data?.length ?? 0) - 1}>↓</Button>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => toggle(b.id, b.is_active)}>{b.is_active ? "Hide" : "Show"}</Button>
+              <Button size="sm" variant="destructive" onClick={() => del(b.id)}><Trash2 className="w-4 h-4" /></Button>
             </div>
-            <Button size="sm" variant="outline" onClick={() => toggle(b.id, b.is_active)}>{b.is_active ? "Hide" : "Show"}</Button>
-            <Button size="sm" variant="destructive" onClick={() => del(b.id)}><Trash2 className="w-4 h-4" /></Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+
 
 function AdminTickets() {
   const qc = useQueryClient();
