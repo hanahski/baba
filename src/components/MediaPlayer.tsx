@@ -311,7 +311,9 @@ function isNativeFile(url: string) {
   return /\.(mp4|webm|mov|mkv|avi|mp3|wav|m4a|ogg|aac|flac)(\?|$)/i.test(url);
 }
 
-export function MediaPlayer({ url, type, title, avatarKey }: Props) {
+export function MediaPlayer({ url: rawUrl, type, title, avatarKey }: Props) {
+  const resolved = useResolvedUrl(rawUrl);
+  const url = resolved ?? rawUrl;
   const kind = detectType(url, type);
   const playerId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -319,6 +321,12 @@ export function MediaPlayer({ url, type, title, avatarKey }: Props) {
   useSinglePlayback(videoRef as React.RefObject<HTMLMediaElement>, playerId);
   useSinglePlayback(audioRef as React.RefObject<HTMLMediaElement>, playerId);
   const embed = useEmbedSingle(playerId);
+
+  if (!resolved) {
+    return <div className="w-full aspect-video rounded-2xl bg-muted animate-pulse" aria-hidden />;
+  }
+
+  if (kind === "image") {
 
   if (kind === "image") {
     return (
