@@ -328,7 +328,6 @@ export function MediaPlayer({ url: rawUrl, type, title, avatarKey }: Props) {
 
   if (kind === "image") {
 
-  if (kind === "image") {
     return (
       <img
         src={url}
